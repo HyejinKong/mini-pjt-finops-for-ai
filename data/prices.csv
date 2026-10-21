@@ -1,0 +1,5 @@
+model_id,input_usd_per_1m,output_usd_per_1m
+claude-sonnet,3.00,15.00
+claude-haiku,1.00,5.00
+nova-pro,0.80,3.20
+nova-lite,0.06,0.24

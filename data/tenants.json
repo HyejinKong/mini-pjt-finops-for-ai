@@ -1,0 +1,10 @@
+[
+  {
+    "tenant_id": "samsung-electronics",
+    "name": "삼성전자"
+  },
+  {
+    "tenant_id": "samsung-sds",
+    "name": "삼성SDS"
+  }
+]
