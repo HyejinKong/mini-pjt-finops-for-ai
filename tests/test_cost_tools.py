@@ -1,0 +1,82 @@
+"""1일차 도구 결과가 생성기가 독립적으로 계산한 정답값과 정확히 일치하는지 검사한다."""
+
+import inspect
+import json
+from pathlib import Path
+
+import pytest
+
+from src.tools import TenantRepo, build_tools
+
+ROOT = Path(__file__).resolve().parent.parent
+EXP = json.loads((ROOT / "evaluation" / "expected_values.json").read_text(encoding="utf-8"))
+TENANTS = list(EXP)
+
+
+def tools_for(tenant):
+    """도구 이름 → 도구."""
+    return {t.name: t for t in build_tools(TenantRepo(tenant))}
+
+
+@pytest.mark.parametrize("tenant", TENANTS)
+@pytest.mark.parametrize("month", ["2026-09", "2026-08"])
+@pytest.mark.parametrize("group_by,key", [("team", "team"), ("service", "service"), ("feature", "feature"), ("model", "model_id")])
+def test_breakdown_matches_expected(tenant, month, group_by, key):
+    out = tools_for(tenant)["get_cost_breakdown"].invoke({"group_by": group_by, "month": month})
+    exp = EXP[tenant]["by_month"][month]
+    assert {r["key"]: r["usd"] for r in out["rows"]} == exp[key]
+    assert out["unattributed"]["usd"] == exp["unattributed"]
+    assert out["total"]["usd"] == exp["total"]
+
+
+@pytest.mark.parametrize("tenant", TENANTS)
+def test_drilldown_by_team(tenant):
+    tool = tools_for(tenant)["get_cost_breakdown"]
+    for team, services in EXP[tenant]["drilldown_service_by_team"].items():
+        out = tool.invoke({"group_by": "service", "team": team})
+        assert {r["key"]: r["usd"] for r in out["rows"]} == services
+        assert "unattributed" not in out
+
+
+@pytest.mark.parametrize("tenant", TENANTS)
+@pytest.mark.parametrize("direction", ["increase", "decrease"])
+@pytest.mark.parametrize("dimension,key", [("team", "team"), ("service", "service"), ("model", "model_id")])
+def test_mom_matches_expected(tenant, direction, dimension, key):
+    out = tools_for(tenant)["get_mom_change"].invoke({"dimension": dimension, "direction": direction})
+    got = [{k: i[k] for k in ("key", "this_usd", "last_usd", "delta_usd", "pct_or_new")} for i in out["items"]]
+    assert got == EXP[tenant][f"mom_{direction}"][key]
+    assert out["unattributed"]["key"] == "미귀속"
+
+
+def test_krw_uses_fixed_rate():
+    out = tools_for("samsung-sds")["get_cost_breakdown"].invoke({"group_by": "team"})
+    for r in out["rows"]:
+        assert r["krw"] == round(float(r["usd"]) * 1400)
+
+
+def test_unknown_team_returns_error_not_amounts():
+    out = tools_for("samsung-electronics")["get_cost_breakdown"].invoke({"group_by": "service", "team": "물류팀"})
+    assert "error" in out and "rows" not in out
+
+
+def test_tools_take_no_tenant_argument():
+    for t in build_tools(TenantRepo("samsung-electronics")):
+        params = set(t.args) | set(inspect.signature(t.func).parameters)
+        assert not any("tenant" in p for p in params), t.name
+
+
+def test_tool_output_has_no_other_tenant_data():
+    sds_amounts = set(EXP["samsung-sds"]["by_month"]["2026-09"]["team"].values()) | {EXP["samsung-sds"]["by_month"]["2026-09"]["total"]}
+    tools = tools_for("samsung-electronics")
+    outputs = [
+        tools["get_cost_breakdown"].invoke({"group_by": g}) for g in ("team", "service", "feature", "model")
+    ] + [tools["get_mom_change"].invoke({"dimension": d}) for d in ("team", "service", "model")]
+    text = json.dumps(outputs, ensure_ascii=False)
+    assert "삼성SDS" not in text
+    assert not any(f'"{a}"' in text for a in sds_amounts)
+
+
+def test_unknown_tenant_rejected():
+    for bad in ("../samsung-sds", "../usage/samsung-sds", "acme"):
+        with pytest.raises(ValueError):
+            TenantRepo(bad)

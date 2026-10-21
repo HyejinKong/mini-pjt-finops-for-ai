@@ -1,0 +1,179 @@
+"""비용 집계 도구.
+
+데이터 접근은 TenantRepo 하나로만 한다. TenantRepo 는 검증된 JWT 의 tenant_id 로만 만들고,
+자기 회사 사용 로그 파일 하나만 연다. 도구 함수에는 tenant 인자가 없다.
+
+금액은 1e-8 USD 단위 정수(토큰 × 센트 단가)로 정확히 합산하고,
+출력할 때만 USD 소수 둘째 자리(반올림: ROUND_HALF_UP)로 바꾼다.
+"""
+
+import csv
+import json
+from decimal import ROUND_HALF_UP, Decimal
+from pathlib import Path
+from typing import Literal
+
+from langchain_core.tools import tool
+
+DATA = Path(__file__).resolve().parent.parent / "data"
+UNATTRIBUTED = "미귀속"
+
+
+def load_settings() -> dict:
+    """data/settings.json 을 읽는다(환율, 기본 기간 등)."""
+    return json.loads((DATA / "settings.json").read_text(encoding="utf-8"))
+
+
+def load_prices() -> dict:
+    """모델별 (입력, 출력) 단가를 센트(per 1M tokens) 정수로 읽는다."""
+    with (DATA / "prices.csv").open(encoding="utf-8") as f:
+        return {
+            r["model_id"]: (int(Decimal(r["input_usd_per_1m"]) * 100), int(Decimal(r["output_usd_per_1m"]) * 100))
+            for r in csv.DictReader(f)
+        }
+
+
+def to_usd(e8: int) -> str:
+    """1e-8 USD 정수를 USD 소수 둘째 자리 문자열로 바꾼다."""
+    return str((Decimal(e8) / Decimal(10**8)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+
+
+def to_krw(e8: int, rate: int) -> int:
+    """1e-8 USD 정수를 고정 환율로 원화 정수로 바꾼다(표시용)."""
+    return int((Decimal(to_usd(e8)) * rate).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
+
+def change_pct(delta_e8: int, last_e8: int) -> str:
+    """증감률을 소수 한 자리 문자열로 돌려준다. 지난달이 0이면 '신규'."""
+    if last_e8 == 0:
+        return "신규"
+    return str((Decimal(delta_e8) * 100 / Decimal(last_e8)).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))
+
+
+class TenantRepo:
+    """한 회사(테넌트)의 사용 로그만 읽는 저장소."""
+
+    def __init__(self, tenant_id: str):
+        """tenant_id 의 사용 로그 파일 하나만 연다. 다른 회사 파일은 읽지 않는다."""
+        known = {t["tenant_id"] for t in json.loads((DATA / "tenants.json").read_text(encoding="utf-8"))}
+        if tenant_id not in known:
+            raise ValueError(f"알 수 없는 테넌트: {tenant_id}")
+        path = DATA / "usage" / f"{tenant_id}.csv"
+        self.prices = load_prices()
+        self.settings = load_settings()
+        with path.open(encoding="utf-8") as f:
+            self.rows = list(csv.DictReader(f))
+
+    def cost_e8(self, row: dict) -> int:
+        """행 하나의 비용을 1e-8 USD 정수로 계산한다."""
+        pin, pout = self.prices[row["model_id"]]
+        return int(row["input_tokens"]) * pin + int(row["output_tokens"]) * pout
+
+    def money(self, e8: int) -> dict:
+        """금액을 USD 문자열과 원화 정수로 함께 돌려준다."""
+        return {"usd": to_usd(e8), "krw": to_krw(e8, self.settings["krw_rate"])}
+
+    def sum_by(self, month: str, key: str, team: str | None = None, service: str | None = None) -> tuple[dict, int]:
+        """month 비용을 key 별로 합산한다. 태그된 행 합계(dict)와 미귀속 합계를 돌려준다."""
+        groups, unattributed = {}, 0
+        for r in self.rows:
+            if not r["date"].startswith(month):
+                continue
+            if not r["team"]:
+                if team is None and service is None:
+                    unattributed += self.cost_e8(r)
+                continue
+            if team is not None and r["team"] != team:
+                continue
+            if service is not None and r["service"] != service:
+                continue
+            groups[r[key]] = groups.get(r[key], 0) + self.cost_e8(r)
+        return groups, unattributed
+
+    def names(self, key: str) -> set:
+        """team, service 같은 컬럼에 실제로 있는 이름 목록."""
+        return {r[key] for r in self.rows if r[key]}
+
+
+GROUP_KEYS = {"team": "team", "service": "service", "feature": "feature", "model": "model_id"}
+
+
+def build_tools(repo: TenantRepo) -> list:
+    """repo 를 감싼 1일차 도구들을 만든다. 도구는 tenant 인자를 받지 않는다."""
+
+    @tool
+    def get_cost_breakdown(
+        group_by: Literal["team", "service", "feature", "model"],
+        month: str = "2026-09",
+        team: str | None = None,
+        service: str | None = None,
+    ) -> dict:
+        """현재 사용자 회사의 Bedrock 비용을 팀·서비스·기능·모델별로 집계한다.
+        드릴다운하려면 team 이나 service 로 범위를 좁힌다. month 는 'YYYY-MM' 형식이다.
+        금액은 USD(소수 둘째 자리)와 원화 환산값(krw)으로 돌려준다.
+        태그가 없는 비용은 '미귀속'(unattributed)으로 따로 돌려준다.
+        '이번 달 팀별 비용', '고객지원팀 서비스별 비용', '9월 모델별 비용' 같은 질문에 쓴다."""
+        if team is not None and team not in repo.names("team"):
+            return {"error": f"'{team}' 팀은 이 회사 데이터에 없습니다.", "teams": sorted(repo.names("team"))}
+        if service is not None and service not in repo.names("service"):
+            return {"error": f"'{service}' 서비스는 이 회사 데이터에 없습니다.", "services": sorted(repo.names("service"))}
+        groups, unattributed = repo.sum_by(month, GROUP_KEYS[group_by], team, service)
+        rows = [{"key": k, **repo.money(v)} for k, v in sorted(groups.items(), key=lambda kv: -kv[1])]
+        result = {
+            "period": month,
+            "scope": {"team": team, "service": service},
+            "group_by": group_by,
+            "rows": rows,
+            "total": repo.money(sum(groups.values()) + unattributed),
+        }
+        if team is None and service is None:
+            result["unattributed"] = {"key": UNATTRIBUTED, **repo.money(unattributed)}
+        return result
+
+    @tool
+    def get_mom_change(
+        dimension: Literal["team", "service", "model"],
+        direction: Literal["increase", "decrease"] = "increase",
+        this_month: str = "2026-09",
+        last_month: str = "2026-08",
+        top_n: int = 3,
+    ) -> dict:
+        """지난달 대비 이번 달 비용이 가장 많이 늘어난(direction='increase') 또는 줄어든(direction='decrease') 상위 항목을 돌려준다.
+        순위는 USD 증감액 기준이며 증감률(pct_or_new)은 소수 한 자리다. 지난달 비용이 0인 항목은 '신규'로 표시한다.
+        미귀속 비용은 순위에서 빼고 unattributed 로 따로 돌려준다.
+        증가의 업무상 이유는 데이터에 없으므로 추측하지 않는다.
+        '왜 늘었어', '전월 대비 증가 원인', '줄어든 서비스' 같은 질문에 쓴다."""
+        key = GROUP_KEYS[dimension]
+        this, this_un = repo.sum_by(this_month, key)
+        last, last_un = repo.sum_by(last_month, key)
+        items = []
+        for k in set(this) | set(last):
+            d = this.get(k, 0) - last.get(k, 0)
+            if (direction == "increase" and d > 0) or (direction == "decrease" and d < 0):
+                items.append((d, k))
+        items.sort(key=lambda x: x[0], reverse=(direction == "increase"))
+        return {
+            "this_month": this_month,
+            "last_month": last_month,
+            "dimension": dimension,
+            "direction": direction,
+            "items": [
+                {
+                    "key": k,
+                    "this_usd": to_usd(this.get(k, 0)),
+                    "last_usd": to_usd(last.get(k, 0)),
+                    "delta_usd": to_usd(d),
+                    "delta_krw": to_krw(d, repo.settings["krw_rate"]),
+                    "pct_or_new": change_pct(d, last.get(k, 0)),
+                }
+                for d, k in items[:top_n]
+            ],
+            "unattributed": {
+                "key": UNATTRIBUTED,
+                "this_usd": to_usd(this_un),
+                "last_usd": to_usd(last_un),
+                "delta_usd": to_usd(this_un - last_un),
+            },
+        }
+
+    return [get_cost_breakdown, get_mom_change]
