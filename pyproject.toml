@@ -1,0 +1,24 @@
+[project]
+name = "finops-ai-agent"
+version = "0.1.0"
+description = "교육용 FinOps for AI Agent (테넌트 격리 Bedrock 비용 귀속)"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "langchain>=1.0",
+    "langchain-aws>=1.0",
+    "langgraph>=1.0",
+    "fastapi",
+    "uvicorn",
+    "pyjwt",
+    "python-dotenv",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "httpx",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
