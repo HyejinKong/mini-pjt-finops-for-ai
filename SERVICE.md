@@ -1,4 +1,4 @@
-# SERVICE · AI 비용 귀속 Agent (FinOps for AI)
+# SERVICE · AI 비용 분석 Agent (FinOps for AI)
 
 ## 1. 사용자·문제·가치
 - 누구를 위한 서비스인가: AI 서비스를 운영하는 팀장·FinOps 담당자. 같은 회사의 LLM 기능 개발자도 같은 데이터를 함께 본다. 회사(테넌트)당 팀장 1명, 개발자 5명
