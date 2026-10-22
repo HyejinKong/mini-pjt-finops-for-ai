@@ -120,8 +120,9 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
 - [x] 7-0 (15분) seed 를 `seed_ce738e162660.v1.4.0.yaml` 로 백업하고 v1.5.0 으로 고친다: 대시보드 범위(패널 다섯 개, 도구 직접 호출 + 버튼으로 받는 LLM 요약, 인라인 SVG, `src/ui.py` 분리), 테넌트 격리, 화면은 숫자를 계산하지 않는다는 규칙
   - 확인: seed 에 위 내용이 있고 YAML 로 읽힌다
   - 결과(2026-10-22): constraints 에 위 내용과 미룰 순서를 넣고 폴더 규약에 `src/ui.py` 를 더했다. 옛 Streamlit 예시 문구는 지웠다. 대시보드는 지금의 UI 처럼 합격 기준(acceptance gate) 밖이라 acceptance_criteria 는 그대로다
-- [ ] 7-1 (40분) `src/api.py` 의 `GET /` HTML·JS 를 `src/ui.py`(FastAPI `APIRouter`)로 옮기고 `api.py` 는 `include_router` 만 한다. 동작은 바꾸지 않는다. CLAUDE.md 폴더 구조에 `src/ui.py` 줄을 넣고 api.py 설명에서 시연 페이지를 뺀다(`check_docs.py` 는 적힌 경로가 실제로 있는지 보므로 코드 수정은 필요 없고, 파일이 생긴 이 작업에서 문서를 고친다)
+- [x] 7-1 (40분) `src/api.py` 의 `GET /` HTML·JS 를 `src/ui.py`(FastAPI `APIRouter`)로 옮기고 `api.py` 는 `include_router` 만 한다. 동작은 바꾸지 않는다. CLAUDE.md 폴더 구조에 `src/ui.py` 줄을 넣고 api.py 설명에서 시연 페이지를 뺀다(`check_docs.py` 는 적힌 경로가 실제로 있는지 보므로 코드 수정은 필요 없고, 파일이 생긴 이 작업에서 문서를 고친다)
   - 확인: `python -m pytest -q` 통과, 옮기기 전후 `GET /` 응답 본문이 같고(diff 0), `python evaluation/check_docs.py` 종료 코드 0
+  - 결과(2026-10-22): pytest 147건 통과, `GET /` 본문 8,425자 diff 0, check_docs 통과, stub 12/12
 - [ ] 7-2 (40분) `data/generate.py` 가 `tools.py` 와 독립적으로 회사별 일별 합계(9월·8월, 전체와 미귀속)를 계산해 `expected_values.json` 에 `daily` 로 더한다. 새 금액도 겹침 검사(`all_amounts`)에 들어간다
   - 확인: 기존 키 구조는 그대로이고 `daily` 만 늘었다, 겹침 0. 겹치면 6-1 처럼 시드를 다시 찾고, 금액이 바뀌면 그 영향(stub·bedrock 재실행, SERVICE.md 5장)을 이 줄 아래에 적는다
 - [ ] 7-3 (45분) `src/tools.py`: `get_daily_trend(month)` 는 일별 `usd`·`krw` 와 미귀속 일별 금액을 준다(회사 전체만, 범위 인자 없음). 에이전트에는 등록하지 않는다(대시보드 전용). KPI 에 쓸 값 중 도구에 없는 것(미귀속 비율, 전체 전월 대비 증감액·증감률)은 `get_cost_breakdown`·`get_mom_change` 결과에 필드로 더한다

@@ -21,8 +21,9 @@
 src/agent.py                 메인 에이전트 그래프, 정책 판정 후 create_agent 호출
 src/tools.py                 비용 집계·전월 대비·what-if 도구
 src/retriever.py             공용 참고 문서 RAG (search_reference 도구)
-src/api.py                   POST /query, 고정 토큰 검증(기본)·JWT 선택 모드, GET / 시연 페이지
+src/api.py                   POST /query, 고정 토큰 검증(기본)·JWT 선택 모드
 src/policy.py                LLM 앞 정책 판정과 거절 문구 상수
+src/ui.py                    시연 화면(GET / 질문 페이지) HTML·JS 와 페이지 라우터. 인증·데이터는 다루지 않는다
 data/                        더미 사용 로그, prices.csv, 사용자 매핑, 참고 문서
 evaluation/                  test_queries.csv, run_eval.py, check_docs.py (채점 리포트 json 은 커밋하지 않는다)
 tests/                       자격 증명 없이 도는 단위 테스트 (LLM 은 스텁)
