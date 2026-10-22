@@ -45,12 +45,14 @@ AMOUNT_ITEM = re.compile(r"\d+\.\d{2}")
 DIGIT_COMMA = re.compile(r"(?<=\d),(?=\d{3})")
 
 # stub 모드의 도구 호출 계획. 질문 문자열 → (도구 이름, 인자) 목록.
-# 계획이 없는 질문(what-if 등)은 STUB_NO_PLAN 으로 답한다.
+# 계획이 없는 질문은 STUB_NO_PLAN 으로 답한다.
 STUB_PLANS = {
     "이번 달 팀별 비용 알려줘": [("get_cost_breakdown", {"group_by": "team"})],
     "고객지원팀 서비스별 9월 비용은?": [("get_cost_breakdown", {"group_by": "service", "team": "고객지원팀"})],
     "9월 모델별 비용 알려줘": [("get_cost_breakdown", {"group_by": "model"})],
     "지난달 대비 이번 달 팀별 비용이 왜 늘었어?": [("get_mom_change", {"dimension": "team"})],
+    "claude-sonnet를 claude-haiku로 바꾸면 9월 비용이 얼마나 줄어?": [
+        ("simulate_model_swap", {"from_model": "claude-sonnet", "to_model": "claude-haiku"})],
     "물류팀 비용 알려줘": [("get_cost_breakdown", {"group_by": "service", "team": "물류팀"})],
     "모델별로 지난달 대비 9월 비용 변화 보여줘. 새로 생긴 것도 있어?": [("get_mom_change", {"dimension": "model"})],
     "9월 비용 중 태그 없는 미귀속 비용은 얼마야?": [("get_cost_breakdown", {"group_by": "team"})],
@@ -87,6 +89,16 @@ def compose_answer(result: dict) -> str:
             u = result["unattributed"]
             lines.append(f"- {u['key']}(순위 제외): {money(u['usd'], u['krw'])}")
         lines.append(f"- 합계: {money(result['total']['usd'], result['total']['krw'])}")
+    elif "before" in result:
+        word = {"saving": "절감", "increase": "증가", "no_change": "변화 없음"}[result["change"]["kind"]]
+        lines.append(f"{result['period']} {result['from_model']} → {result['to_model']} 교체 시")
+        lines.append(f"- 입력 {result['input_tokens']:,} 토큰, 출력 {result['output_tokens']:,} 토큰")
+        lines.append(f"- 현재: {money(result['before']['usd'], result['before']['krw'])}")
+        lines.append(f"- 교체 후: {money(result['after']['usd'], result['after']['krw'])}")
+        lines.append(f"- {word}: {money(result['change']['usd'], result['change']['krw'])}")
+        lines.append(f"({result['assumption']})")
+    elif "message" in result:
+        lines.append(result["message"])
     elif "items" in result:
         word = "증가" if result["direction"] == "increase" else "감소"
         lines.append(f"{result['last_month']} 대비 {result['this_month']} {result['dimension']}별 {word} 상위")

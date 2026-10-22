@@ -1,6 +1,6 @@
 """비용 집계 도구.
 
-데이터 접근은 TenantRepo 하나로만 한다. TenantRepo 는 검증된 JWT 의 tenant_id 로만 만들고,
+데이터 접근은 TenantRepo 하나로만 한다. TenantRepo 는 검증된 인증 토큰의 tenant_id 로만 만들고,
 자기 회사 사용 로그 파일 하나만 연다. 도구 함수에는 tenant 인자가 없다.
 
 금액은 1e-8 USD 단위 정수(토큰 × 센트 단가)로 정확히 합산하고,
@@ -17,6 +17,7 @@ from langchain_core.tools import tool
 
 DATA = Path(__file__).resolve().parent.parent / "data"
 UNATTRIBUTED = "미귀속"
+WHATIF_ASSUMPTION = "토큰 수 동일 가정, 품질 차이 미반영"
 
 
 def load_settings() -> dict:
@@ -90,6 +91,15 @@ class TenantRepo:
             groups[r[key]] = groups.get(r[key], 0) + self.cost_e8(r)
         return groups, unattributed
 
+    def scoped_rows(self, month: str, team: str | None = None, service: str | None = None,
+                    feature: str | None = None) -> list[dict]:
+        """month 의 행 중 범위에 맞는 것. 범위를 좁히면 태그 없는(미귀속) 행은 빠진다."""
+        rows = [r for r in self.rows if r["date"].startswith(month)]
+        for key, value in (("team", team), ("service", service), ("feature", feature)):
+            if value is not None:
+                rows = [r for r in rows if r[key] == value]
+        return rows
+
     def names(self, key: str) -> set:
         """team, service 같은 컬럼에 실제로 있는 이름 목록."""
         return {r[key] for r in self.rows if r[key]}
@@ -99,7 +109,7 @@ GROUP_KEYS = {"team": "team", "service": "service", "feature": "feature", "model
 
 
 def build_tools(repo: TenantRepo) -> list:
-    """repo 를 감싼 1일차 도구들을 만든다. 도구는 tenant 인자를 받지 않는다."""
+    """repo 를 감싼 비용 도구들을 만든다. 도구는 tenant 인자를 받지 않는다."""
 
     @tool
     def get_cost_breakdown(
@@ -176,4 +186,50 @@ def build_tools(repo: TenantRepo) -> list:
             },
         }
 
-    return [get_cost_breakdown, get_mom_change]
+    @tool
+    def simulate_model_swap(
+        from_model: str,
+        to_model: str,
+        month: str = "2026-09",
+        team: str | None = None,
+        service: str | None = None,
+        feature: str | None = None,
+    ) -> dict:
+        """모델 from_model 로 쓴 사용분을 to_model 로 바꿨다면 비용이 어떻게 달라지는지 계산한다(what-if).
+        같은 기간·범위의 입력·출력 토큰 수를 그대로 두고 to_model 의 입력·출력 단가로 다시 계산한다.
+        범위는 회사 전체(기본) 또는 team, service, feature 로 좁힌다. month 는 'YYYY-MM' 형식이다.
+        change.kind 가 saving 이면 절감, increase 면 비용 증가다. 답에는 assumption 문구를 함께 쓴다.
+        'claude-sonnet 을 claude-haiku 로 바꾸면 얼마나 줄어?' 같은 질문에 쓴다."""
+        scope = {"team": team, "service": service, "feature": feature}
+        base = {"period": month, "scope": scope, "from_model": from_model, "to_model": to_model,
+                "assumption": WHATIF_ASSUMPTION}
+        unknown = [m for m in (from_model, to_model) if m not in repo.prices]
+        if unknown:
+            return {**base, "error": f"단가표에 없는 모델입니다: {', '.join(unknown)}", "models": sorted(repo.prices)}
+        for key, value in scope.items():
+            if value is not None and value not in repo.names(key):
+                return {**base, "error": f"'{value}' 은(는) 이 회사 데이터에 없는 {key} 입니다.",
+                        f"{key}s": sorted(repo.names(key))}
+        if from_model == to_model:
+            return {**base, "kind": "no_change", "message": "같은 모델이라 비용 변화가 없습니다."}
+        rows = repo.scoped_rows(month, team, service, feature)
+        used = [r for r in rows if r["model_id"] == from_model]
+        if not used:
+            return {**base, "kind": "no_usage", "message": f"이 범위에서 {from_model} 사용분이 없어 절감액은 $0.00 입니다.",
+                    "models_in_scope": sorted({r["model_id"] for r in rows})}
+        inp = sum(int(r["input_tokens"]) for r in used)
+        out = sum(int(r["output_tokens"]) for r in used)
+        before = sum(repo.cost_e8(r) for r in used)
+        to_in, to_out = repo.prices[to_model]
+        after = inp * to_in + out * to_out
+        kind = "saving" if after < before else ("increase" if after > before else "no_change")
+        return {
+            **base,
+            "input_tokens": inp,
+            "output_tokens": out,
+            "before": repo.money(before),
+            "after": repo.money(after),
+            "change": {"kind": kind, **repo.money(abs(before - after))},
+        }
+
+    return [get_cost_breakdown, get_mom_change, simulate_model_swap]

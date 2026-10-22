@@ -59,6 +59,37 @@ def test_unknown_team_returns_error_not_amounts():
     assert "error" in out and "rows" not in out
 
 
+@pytest.mark.parametrize("tenant", TENANTS)
+def test_whatif_matches_expected(tenant):
+    tool = tools_for(tenant)["simulate_model_swap"]
+    for w in EXP[tenant]["whatif"]:
+        out = tool.invoke({"from_model": w["x"], "to_model": w["y"]})
+        assert (out["input_tokens"], out["output_tokens"]) == (w["input_tokens"], w["output_tokens"])
+        assert (out["before"]["usd"], out["after"]["usd"]) == (w["before_usd"], w["after_usd"])
+        assert out["change"]["kind"] == w["kind"]
+        assert out["change"]["usd"] == w["saving_usd"].lstrip("-")
+        assert out["assumption"] == "토큰 수 동일 가정, 품질 차이 미반영"
+
+
+def test_whatif_before_equals_actual_cost():
+    tools = tools_for("honeybee-electronics")
+    actual = tools["get_cost_breakdown"].invoke({"group_by": "model", "team": "고객지원팀"})
+    for row in actual["rows"]:
+        to_model = "claude-haiku" if row["key"] == "nova-lite" else "nova-lite"
+        out = tools["simulate_model_swap"].invoke({"from_model": row["key"], "to_model": to_model, "team": "고객지원팀"})
+        assert out["before"]["usd"] == row["usd"]
+
+
+def test_whatif_edge_cases():
+    tool = tools_for("honeybee-electronics")["simulate_model_swap"]
+    unknown = tool.invoke({"from_model": "gpt-4", "to_model": "claude-haiku"})
+    assert "error" in unknown and unknown["models"] == ["claude-haiku", "claude-sonnet", "nova-lite", "nova-pro"]
+    assert tool.invoke({"from_model": "claude-haiku", "to_model": "claude-haiku"})["kind"] == "no_change"
+    no_usage = tool.invoke({"from_model": "nova-pro", "to_model": "nova-lite", "month": "2026-08"})
+    assert no_usage["kind"] == "no_usage" and "nova-pro" not in no_usage["models_in_scope"]
+    assert "error" in tool.invoke({"from_model": "claude-sonnet", "to_model": "claude-haiku", "team": "물류팀"})
+
+
 def test_tools_take_no_tenant_argument():
     for t in build_tools(TenantRepo("honeybee-electronics")):
         params = set(t.args) | set(inspect.signature(t.func).parameters)
