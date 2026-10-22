@@ -61,7 +61,7 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
 ## 묶음 4. 문서와 실제 모델 채점 (3일차)
 - [x] 4-1 (40분) `CLAUDE.md` 의 인증 항목(기술 스택, api.py 설명, 주고받는 형식, 테넌트 규칙, 비밀 값)을 고정 토큰 기본·JWT 선택으로 고친다. seed 를 `seed_ce738e162660.v1.1.0.yaml` 로 백업하고 v1.2.0 으로 고친다(인증, 가상 회사명, live 리포트는 SERVICE.md 에만 기록)
   - 확인: `git grep -n "JWT" CLAUDE.md` 의 모든 줄이 "선택 모드" 문맥이고, seed 에 회사명이 없다
-- [ ] 4-2 (45분) `evaluation/check_docs.py`: SERVICE.md·CLAUDE.md 의 필수 섹션, 폴더 구조, 거절 문구 상수 일치를 검사한다
+- [x] 4-2 (45분) `evaluation/check_docs.py`: SERVICE.md·CLAUDE.md 의 필수 섹션, 폴더 구조, 거절 문구 상수 일치를 검사한다
   - 확인: `python evaluation/check_docs.py` 종료 코드 0
 - [ ] 4-3 (40분) `python evaluation/run_eval.py --llm bedrock` 실행(리포트 json 은 로컬에만, 커밋 안 함), SERVICE.md 5장 "미측정" 을 실제 통과율로 바꾼다
   - 확인: `git status` 에 eval_report_live.json 이 안 보이고, SERVICE.md 5장에 카테고리별·전체 통과율이 적혀 있다
