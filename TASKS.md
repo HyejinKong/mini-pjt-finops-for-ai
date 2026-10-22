@@ -69,7 +69,10 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
   - 확인: `python -m pytest -q` 통과(원화 필드 테스트 추가), stub 12/12 유지, `--llm bedrock` 재실행에서 q10 답변에 감소액 $5.06 이 있고 원화가 모두 contexts 값이다. SERVICE.md 5장을 재실행 결과로 고친다
   - 참고: 4-3 bedrock 실행에서 q10 이 감소액을 빠뜨렸고, 도구가 주지 않은 원화를 직접 계산해 틀렸다("지난달 $36.35 (약 50,904원)", 정답 50,890원)
   - 추가(같은 작업): 재실행에서 q03 이 `get_cost_breakdown` 의 total(미귀속 포함 $791.43)을 "소계"로 쓰고 미귀속을 또 더해 "전체 합계 $908.24"를 지어냈다. 도구에 미귀속 제외 합계 `tagged_total` 을 더하고, docstring·프롬프트에 "total 은 미귀속 포함, 다시 더하지 않는다"를 적는다. 확인은 위와 같고 q03 답변의 숫자도 모두 contexts 값이어야 한다
-- 커밋: 작업마다 하나(4-1 docs, 4-2 feat(eval), 4-3 docs, 4-4 fix(tools))
+- [x] 4-5 (40분) `evaluation/run_eval.py` 에 숫자 근거 규칙을 더한다: answer 의 USD(`$X`)·원화(`N원`)·비율(`N%`)이 모두 contexts 숫자(부호 무시)에 있어야 통과. 빠진 숫자는 문항별 결과와 리포트에 `ungrounded` 로 보인다
+  - 확인: `python evaluation/run_eval.py --llm stub` 12/12 유지, 4-3 첫 실행의 q03 답변("전체 합계 $908.24")을 넣으면 걸리는 테스트(새 파일 `tests/test_run_eval.py`)가 통과, `--llm bedrock` 재실행 결과를 SERVICE.md 5장에 고친다
+  - 참고: 4-4 에서 q03 의 지어낸 합계가 기존 세 규칙을 통과했다. 지금은 따로 대조 스크립트로만 잡았다
+- 커밋: 작업마다 하나(4-1 docs, 4-2 feat(eval), 4-3 docs, 4-4 fix(tools), 4-5 feat(eval))
 
 ## 묶음 5. 시간이 남으면
 - [ ] 5-1 (30분) JWT 모드 점검: `AUTH_MODE=jwt` 로 전체 테스트와 `run_eval.py --auth jwt --llm stub` 을 돌린다
