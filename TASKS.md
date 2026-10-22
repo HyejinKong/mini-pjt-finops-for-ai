@@ -28,9 +28,9 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
   - 확인: 생성 전후 `evaluation/expected_values.json` 의 금액 목록이 같고, `git grep -n -iE "삼성|samsung" -- data evaluation` 결과 0건
 - [x] 1-2 (30분) `src/agent.py`(시험 실행 user_id)와 `tests/*.py` 의 tenant_id·user_id·회사명을 바꾼다
   - 확인: `python -m pytest -q` 전부 통과, `git grep -n -iE "삼성|samsung|\bsec-|\bsds-" -- . ":!uv.lock"` 결과 0건
-- [ ] 1-3 (45분) `src/api.py`: `get_principal` 이 `AUTH_MODE`(기본 static)에 따라 `resolve_static`(`.env` 토큰 2개와 `hmac.compare_digest` 비교, 빈 값은 통과 금지) 또는 `resolve_jwt`(지금 JWT 로직을 옮긴 것)를 부른다. 기존 JWT 테스트에는 `AUTH_MODE=jwt` monkeypatch 를 더한다
+- [x] 1-3 (45분) `src/api.py`: `get_principal` 이 `AUTH_MODE`(기본 static)에 따라 `resolve_static`(`.env` 토큰 2개와 `hmac.compare_digest` 비교, 빈 값은 통과 금지) 또는 `resolve_jwt`(지금 JWT 로직을 옮긴 것)를 부른다. 기존 JWT 테스트에는 `AUTH_MODE=jwt` monkeypatch 를 더한다
   - 확인: `python -m pytest -q` 전부 통과(기존 JWT 테스트가 jwt 모드로 그대로 통과)
-- [ ] 1-4 (40분) `tests/test_api_auth.py` 에 static 모드 테스트를 더한다: 토큰 없음·접두어 오류·모르는 토큰·빈 토큰은 401, 꿀벌전자 토큰은 꿀벌전자 데이터만, 꿀벌전자 토큰으로 판다소프트를 물으면 거절 문구
+- [x] 1-4 (40분) `tests/test_api_auth.py` 에 static 모드 테스트를 더한다: 토큰 없음·접두어 오류·모르는 토큰·빈 토큰은 401, 꿀벌전자 토큰은 꿀벌전자 데이터만, 꿀벌전자 토큰으로 판다소프트를 물으면 거절 문구
   - 확인: `python -m pytest tests/test_api_auth.py -q` 에서 static 테스트가 모두 통과
 - [ ] 1-5 (30분) `.env.example` 에 `AUTH_MODE=static` 과 토큰 2줄을 넣는다(`JWT_SECRET=` 유지). 사용자가 `.env` 에 토큰 값을 채운 뒤 서버를 띄워 실제 Bedrock 으로 q01 을 보낸다
   - 확인: `uvicorn src.api:app` 에 꿀벌전자 토큰으로 q01 을 보내면 answer 에 q01 expected_traits 금액이 있고 contexts 에 get_cost_breakdown 결과, trace 에 도구 호출이 있다. 토큰 없이 보내면 401

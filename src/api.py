@@ -1,8 +1,12 @@
-"""POST /query API. 신원은 서명된 더미 JWT 로만 받는다.
+"""POST /query API. 회사는 Authorization 헤더의 토큰으로만 정한다.
+
+AUTH_MODE=static(기본): .env 의 회사별 고정 토큰과 비교한다.
+AUTH_MODE=jwt(선택): 서명된 더미 JWT 를 검증하고 sub 로 회사를 찾는다.
 
 실행: uvicorn src.api:app --reload
 """
 
+import hmac
 import json
 import os
 from dataclasses import dataclass
@@ -19,13 +23,13 @@ load_dotenv()
 
 DATA = Path(__file__).resolve().parent.parent / "data"
 ALGORITHM = "HS256"
+AUTH_MODES = ("static", "jwt")
 
 
 @dataclass(frozen=True)
 class Principal:
-    """검증된 요청자. tenant_id 는 users.json 에서 정한다."""
+    """검증된 요청자. 회사 안에서는 모든 역할이 같은 데이터를 보므로 tenant_id 만 둔다."""
 
-    user_id: str
     tenant_id: str
 
 
@@ -34,6 +38,34 @@ class QueryRequest(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
     question: str = Field(min_length=1, max_length=1000)
+
+
+def auth_mode() -> str:
+    """AUTH_MODE 를 환경변수에서 읽는다. 없으면 static."""
+    mode = os.getenv("AUTH_MODE", "static")
+    if mode not in AUTH_MODES:
+        raise RuntimeError(f"AUTH_MODE 는 {AUTH_MODES} 중 하나여야 합니다: {mode}")
+    return mode
+
+
+def tenant_ids() -> list[str]:
+    """등록된 회사 tenant_id 목록."""
+    rows = json.loads((DATA / "tenants.json").read_text(encoding="utf-8"))
+    return [r["tenant_id"] for r in rows]
+
+
+def token_env_name(tenant_id: str) -> str:
+    """회사 고정 토큰을 담는 환경변수 이름. 예: panda-soft → TENANT_TOKEN_PANDA_SOFT."""
+    return "TENANT_TOKEN_" + tenant_id.upper().replace("-", "_")
+
+
+def resolve_static(token: str) -> str | None:
+    """회사별 고정 토큰과 비교해 tenant_id 를 돌려준다. 값이 비어 있는 회사는 인증하지 않는다."""
+    for tenant_id in tenant_ids():
+        expected = os.getenv(token_env_name(tenant_id), "")
+        if expected and hmac.compare_digest(token.encode(), expected.encode()):
+            return tenant_id
+    return None
 
 
 def jwt_secret() -> str:
@@ -57,18 +89,25 @@ def issue_dummy_token(user_id: str) -> str:
     return jwt.encode({"sub": user_id}, jwt_secret(), algorithm=ALGORITHM)
 
 
+def resolve_jwt(token: str) -> str | None:
+    """서명된 더미 JWT 를 검증하고 sub 사용자의 tenant_id 를 돌려준다. 실패하면 None."""
+    try:
+        claims = jwt.decode(token, jwt_secret(), algorithms=[ALGORITHM])
+    except jwt.PyJWTError:
+        return None
+    user = users().get(claims.get("sub"))
+    return user["tenant_id"] if user else None
+
+
 def get_principal(authorization: str | None = Header(default=None)) -> Principal:
-    """Authorization: Bearer 토큰을 검증해 Principal 을 만든다. 실패하면 401."""
+    """Authorization: Bearer 토큰을 AUTH_MODE 방식으로 검증해 Principal 을 만든다. 실패하면 401."""
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="인증 토큰이 필요합니다.")
-    try:
-        claims = jwt.decode(authorization.removeprefix("Bearer "), jwt_secret(), algorithms=[ALGORITHM])
-    except jwt.PyJWTError:
+    resolve = resolve_jwt if auth_mode() == "jwt" else resolve_static
+    tenant_id = resolve(authorization.removeprefix("Bearer "))
+    if tenant_id is None:
         raise HTTPException(status_code=401, detail="유효하지 않은 토큰입니다.")
-    user = users().get(claims.get("sub"))
-    if user is None:
-        raise HTTPException(status_code=401, detail="알 수 없는 사용자입니다.")
-    return Principal(user_id=user["user_id"], tenant_id=user["tenant_id"])
+    return Principal(tenant_id=tenant_id)
 
 
 app = FastAPI(title="FinOps for AI Agent")

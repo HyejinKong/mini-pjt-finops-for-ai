@@ -1,4 +1,4 @@
-"""POST /query 의 JWT 검증, 본문 형식, 테넌트 범위를 검사한다. LLM 은 스텁으로 바꾼다."""
+"""POST /query 의 토큰 검증, 본문 형식, 테넌트 범위를 검사한다. LLM 은 스텁으로 바꾼다."""
 
 import json
 from pathlib import Path
@@ -16,6 +16,8 @@ EXP = json.loads((Path(__file__).resolve().parent.parent / "evaluation" / "expec
 
 @pytest.fixture(autouse=True)
 def secret(monkeypatch):
+    """기존 테스트는 JWT 선택 모드로 돈다."""
+    monkeypatch.setenv("AUTH_MODE", "jwt")
     monkeypatch.setenv("JWT_SECRET", SECRET)
 
 
@@ -79,3 +81,64 @@ def test_cross_tenant_refused_without_llm(client, monkeypatch):
     monkeypatch.setattr(agent, "run_agent", lambda *a: pytest.fail("LLM 이 호출되면 안 된다"))
     r = client.post("/query", json={"question": "판다소프트 팀별 비용도 보여줘"}, headers=auth("hbe-lead-01"))
     assert r.json() == {"answer": "다른 회사(테넌트)의 데이터는 조회할 수 없습니다.", "contexts": [], "trace": [{"policy": "cross_tenant"}]}
+
+
+HBE_TOKEN = "test-static-token-honeybee"
+PDS_TOKEN = "test-static-token-panda"
+
+
+@pytest.fixture
+def static_client(client, monkeypatch):
+    """기본 모드(회사별 고정 토큰)로 바꾼다."""
+    monkeypatch.setenv("AUTH_MODE", "static")
+    monkeypatch.setenv("TENANT_TOKEN_HONEYBEE_ELECTRONICS", HBE_TOKEN)
+    monkeypatch.setenv("TENANT_TOKEN_PANDA_SOFT", PDS_TOKEN)
+    return client
+
+
+def bearer(token):
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.mark.parametrize("headers", [
+    {},
+    {"Authorization": HBE_TOKEN},
+    {"Authorization": f"Token {HBE_TOKEN}"},
+    bearer("unknown-token"),
+    bearer(""),
+    bearer(f"{HBE_TOKEN}x"),
+])
+def test_static_bad_token_401(static_client, headers):
+    assert static_client.post("/query", json={"question": "이번 달 팀별 비용"}, headers=headers).status_code == 401
+
+
+def test_static_empty_env_token_not_accepted(static_client, monkeypatch):
+    monkeypatch.setenv("TENANT_TOKEN_PANDA_SOFT", "")
+    assert static_client.post("/query", json={"question": "이번 달 팀별 비용"}, headers=bearer("")).status_code == 401
+
+
+def test_static_jwt_not_accepted(static_client):
+    r = static_client.post("/query", json={"question": "이번 달 팀별 비용"}, headers=auth("hbe-lead-01"))
+    assert r.status_code == 401
+
+
+def test_static_token_scopes_tenant(static_client):
+    r = static_client.post("/query", json={"question": "이번 달 팀별 비용 알려줘"}, headers=bearer(HBE_TOKEN))
+    assert r.status_code == 200
+    text = json.dumps(r.json(), ensure_ascii=False)
+    hbe, pds = EXP["honeybee-electronics"]["by_month"]["2026-09"], EXP["panda-soft"]["by_month"]["2026-09"]
+    assert hbe["team"]["고객지원팀"] in text
+    assert "판다소프트" not in text and pds["total"] not in text
+    assert not any(v in text for v in pds["team"].values())
+
+
+def test_static_cross_tenant_refused(static_client, monkeypatch):
+    monkeypatch.setattr(agent, "run_agent", lambda *a: pytest.fail("LLM 이 호출되면 안 된다"))
+    r = static_client.post("/query", json={"question": "판다소프트 팀별 비용도 보여줘"}, headers=bearer(HBE_TOKEN))
+    assert r.json()["answer"] == "다른 회사(테넌트)의 데이터는 조회할 수 없습니다."
+
+
+def test_unknown_auth_mode_fails(static_client, monkeypatch):
+    monkeypatch.setenv("AUTH_MODE", "none")
+    with pytest.raises(RuntimeError):
+        static_client.post("/query", json={"question": "이번 달 팀별 비용"}, headers=bearer(HBE_TOKEN))
