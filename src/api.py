@@ -125,7 +125,7 @@ def query(body: QueryRequest, principal: Principal = Depends(get_principal)) -> 
     return agent.answer(body.question, principal.tenant_id)
 
 
-UI_HTML = """<!doctype html>
+UI_HTML = r"""<!doctype html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
@@ -150,6 +150,16 @@ UI_HTML = """<!doctype html>
   .send:disabled { opacity:.5; cursor:wait; }
   .out { margin-top:20px; padding:14px; border:1px solid var(--line); border-radius:8px; background:var(--panel); white-space:pre-wrap; word-break:break-word; }
   .out.err { color:var(--err); }
+  .out.md { white-space:normal; }
+  .out.md > :first-child { margin-top:0; } .out.md > :last-child { margin-bottom:0; }
+  .out.md h3, .out.md h4, .out.md h5, .out.md h6 { margin:14px 0 6px; font-size:15px; }
+  .out.md p, .out.md ul, .out.md ol { margin:8px 0; } .out.md ul, .out.md ol { padding-left:22px; }
+  .out.md code { padding:1px 4px; border-radius:4px; background:var(--bg); font-size:13px; }
+  .out.md hr { border:0; border-top:1px solid var(--line); margin:12px 0; }
+  .tbl { overflow-x:auto; margin:8px 0; }
+  .tbl table { border-collapse:collapse; font-size:14px; }
+  .tbl th, .tbl td { border:1px solid var(--line); padding:5px 10px; text-align:left; white-space:nowrap; }
+  .tbl th { background:var(--bg); }
   details { margin-top:10px; }
   summary { cursor:pointer; color:var(--muted); font-size:13px; }
   pre { margin:6px 0 0; padding:10px; overflow-x:auto; background:var(--bg); border-radius:6px; font-size:12px; }
@@ -168,8 +178,66 @@ UI_HTML = """<!doctype html>
   <div id="result"></div>
 </main>
 <script>
+  // md:start 마크다운 변환기. 먼저 전부 이스케이프하고, 정해 둔 태그만 다시 만든다(LLM 답변에 HTML 이 끼어들 수 없다)
+  function esc(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+  function inline(s) {
+    return s.replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  }
+  const LIST = /^(\s*)([-*]|\d+\.)\s+(.*)$/, HEADING = /^(#{1,4})\s+(.*)$/, RULE = /^\s*(-{3,}|\*{3,})\s*$/;
+  const isRow = l => /^\s*\|.*\|\s*$/.test(l);
+  const isSep = l => /^\s*\|?(\s*:?-{3,}:?\s*\|)+\s*:?-{0,}:?\s*\|?\s*$/.test(l);
+  const cells = l => l.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map(c => inline(c.trim()));
+  function renderMarkdown(md) {
+    const lines = esc(md).split(/\r?\n/), out = [];
+    let i = 0;
+    while (i < lines.length) {
+      const l = lines[i];
+      if (isRow(l) && i + 1 < lines.length && isSep(lines[i + 1])) {
+        const head = cells(l), body = [];
+        for (i += 2; i < lines.length && isRow(lines[i]); i++) body.push(cells(lines[i]));
+        out.push('<div class="tbl"><table><thead><tr>' + head.map(c => `<th>${c}</th>`).join("") + "</tr></thead><tbody>"
+          + body.map(r => "<tr>" + r.map(c => `<td>${c}</td>`).join("") + "</tr>").join("") + "</tbody></table></div>");
+        continue;
+      }
+      let m = l.match(HEADING);
+      if (m) { const n = Math.min(m[1].length + 2, 6); out.push(`<h${n}>${inline(m[2])}</h${n}>`); i++; continue; }
+      if (RULE.test(l)) { out.push("<hr>"); i++; continue; }
+      if (LIST.test(l)) {
+        const ordered = /^\s*\d+\./.test(l), start = ordered ? parseInt(l.trim(), 10) : 1, base = l.match(LIST)[1].length, items = [];
+        while (i < lines.length) {
+          if (!lines[i].trim()) {
+            let j = i;
+            while (j < lines.length && !lines[j].trim()) j++;
+            if (j < lines.length && LIST.test(lines[j])) { i = j; continue; }
+            break;
+          }
+          if (!LIST.test(lines[i]) && !/^\s{2,}\S/.test(lines[i])) break;
+          const lm = lines[i].match(LIST);
+          if (lm && (lm[1].length <= base || !items.length)) items.push({ html: inline(lm[3]), subs: [] });
+          else if (lm) items[items.length - 1].subs.push(inline(lm[3]));
+          else items[items.length - 1].html += "<br>" + inline(lines[i].trim());
+          i++;
+        }
+        const tag = ordered ? "ol" : "ul", attr = ordered && start !== 1 ? ` start="${start}"` : "";
+        out.push(`<${tag}${attr}>` + items.map(it => "<li>" + it.html
+          + (it.subs.length ? "<ul>" + it.subs.map(x => `<li>${x}</li>`).join("") + "</ul>" : "") + "</li>").join("") + `</${tag}>`);
+        continue;
+      }
+      if (!l.trim()) { i++; continue; }
+      const para = [inline(l)];
+      for (i++; i < lines.length && lines[i].trim() && !isRow(lines[i]) && !HEADING.test(lines[i])
+           && !LIST.test(lines[i]) && !RULE.test(lines[i]); i++) para.push(inline(lines[i]));
+      out.push("<p>" + para.join("<br>") + "</p>");
+    }
+    return out.join("");
+  }
+  // md:end
   const EXAMPLES = ["이번 달 팀별 비용 알려줘", "지난달 대비 이번 달 팀별 비용이 왜 늘었어?",
-    "claude-sonnet를 claude-haiku로 바꾸면 9월 비용이 얼마나 줄어?", "9월 비용 중 태그 없는 미귀속 비용은 얼마야?"];
+    "claude-sonnet를 claude-haiku로 바꾸면 9월 비용이 얼마나 줄어?", "9월 비용 중 태그 없는 미귀속 비용은 얼마야?",
+    "9월 팀별·모델별 비용 표로 보여줘", "고객지원팀 모델별로 지난달 대비 뭐가 늘었어?",
+    "팀 × 모델 조합별로 지난달보다 가장 많이 늘어난 건?"];
   const q = document.getElementById("q"), token = document.getElementById("token");
   const send = document.getElementById("send"), result = document.getElementById("result");
   for (const text of EXAMPLES) {
@@ -185,11 +253,12 @@ UI_HTML = """<!doctype html>
     d.append(s, pre);
     return d;
   }
-  function show(text, isError) {
+  function show(text, isError, markdown) {
     result.replaceChildren();
     const div = document.createElement("div");
-    div.className = "out" + (isError ? " err" : "");
-    div.textContent = text;
+    div.className = "out" + (isError ? " err" : "") + (markdown ? " md" : "");
+    if (markdown) div.innerHTML = renderMarkdown(text);
+    else div.textContent = text;
     result.append(div);
     return div;
   }
@@ -203,7 +272,7 @@ UI_HTML = """<!doctype html>
       const body = await r.json().catch(() => ({}));
       if (r.status === 401) { show("401 인증 실패: 토큰이 없거나 올바르지 않습니다. 회사 토큰을 확인해 주세요.", true); return; }
       if (!r.ok) { show(`요청 실패(${r.status}): ` + JSON.stringify(body.detail ?? body), true); return; }
-      const div = show(body.answer);
+      const div = show(body.answer, false, true);
       div.after(block(`contexts (${body.contexts.length})`, body.contexts.map(c => {
         try { return { tool: c.tool, content: JSON.parse(c.content) }; } catch { return c; }
       })), block("trace", body.trace));
