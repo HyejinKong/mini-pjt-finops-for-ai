@@ -48,6 +48,7 @@ tests/                       자격 증명 없이 도는 단위 테스트 (LLM �
 
 ## 자주 쓰는 명령
 - 서버 실행: `uvicorn src.api:app --reload`
+- 시연용 JWT 발급(JWT 선택 모드): `python -m src.api issue hbe-lead-01` (1시간 뒤 만료)
 - 단위 테스트: `python -m pytest -q` (한 파일만: `python -m pytest tests/test_cost_tools.py -q`)
 - 채점: `python evaluation/run_eval.py --llm stub`
 - 문서 확인: `python evaluation/check_docs.py`

@@ -1,15 +1,18 @@
 """POST /query API. 회사는 Authorization 헤더의 토큰으로만 정한다.
 
 AUTH_MODE=static(기본): .env 의 회사별 고정 토큰과 비교한다.
-AUTH_MODE=jwt(선택): 서명된 더미 JWT 를 검증하고 sub 로 회사를 찾는다.
+AUTH_MODE=jwt(선택): 서명된 더미 JWT 를 검증하고 sub 로 회사를 찾는다. exp 가 없거나 지나면 거절한다.
 
 실행: uvicorn src.api:app --reload
+시연용 JWT 발급: python -m src.api issue hbe-lead-01
 """
 
+import argparse
 import hmac
 import json
 import os
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import jwt
@@ -24,6 +27,7 @@ load_dotenv()
 DATA = Path(__file__).resolve().parent.parent / "data"
 ALGORITHM = "HS256"
 AUTH_MODES = ("static", "jwt")
+TOKEN_TTL = timedelta(hours=1)
 
 
 @dataclass(frozen=True)
@@ -82,17 +86,18 @@ def users() -> dict:
     return {u["user_id"]: u for u in rows}
 
 
-def issue_dummy_token(user_id: str) -> str:
-    """테스트와 채점용 더미 JWT 를 발급한다. 회사 정보는 서버가 users.json 에서 정한다."""
+def issue_dummy_token(user_id: str, ttl: timedelta = TOKEN_TTL) -> str:
+    """테스트·채점·시연용 더미 JWT 를 발급한다. ttl 뒤에 만료된다. 회사 정보는 서버가 users.json 에서 정한다."""
     if user_id not in users():
         raise ValueError(f"알 수 없는 사용자: {user_id}")
-    return jwt.encode({"sub": user_id}, jwt_secret(), algorithm=ALGORITHM)
+    exp = datetime.now(timezone.utc) + ttl
+    return jwt.encode({"sub": user_id, "exp": exp}, jwt_secret(), algorithm=ALGORITHM)
 
 
 def resolve_jwt(token: str) -> str | None:
-    """서명된 더미 JWT 를 검증하고 sub 사용자의 tenant_id 를 돌려준다. 실패하면 None."""
+    """서명된 더미 JWT 를 검증하고 sub 사용자의 tenant_id 를 돌려준다. exp·sub 가 없거나 만료되면 None."""
     try:
-        claims = jwt.decode(token, jwt_secret(), algorithms=[ALGORITHM])
+        claims = jwt.decode(token, jwt_secret(), algorithms=[ALGORITHM], options={"require": ["exp", "sub"]})
     except jwt.PyJWTError:
         return None
     user = users().get(claims.get("sub"))
@@ -117,3 +122,18 @@ app = FastAPI(title="FinOps for AI Agent")
 def query(body: QueryRequest, principal: Principal = Depends(get_principal)) -> dict:
     """질문을 받아 answer, contexts, trace 를 돌려준다."""
     return agent.answer(body.question, principal.tenant_id)
+
+
+def main() -> None:
+    """시연용 명령. issue <user_id> 로 JWT 선택 모드에서 쓸 토큰을 출력한다."""
+    parser = argparse.ArgumentParser(description="FinOps Agent API 도우미 명령")
+    sub = parser.add_subparsers(dest="command", required=True)
+    issue = sub.add_parser("issue", help="user_id 로 더미 JWT 발급(AUTH_MODE=jwt 에서 사용)")
+    issue.add_argument("user_id")
+    args = parser.parse_args()
+    if args.command == "issue":
+        print(issue_dummy_token(args.user_id))
+
+
+if __name__ == "__main__":
+    main()

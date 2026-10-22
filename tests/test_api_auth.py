@@ -1,6 +1,7 @@
 """POST /query 의 토큰 검증, 본문 형식, 테넌트 범위를 검사한다. LLM 은 스텁으로 바꾼다."""
 
 import json
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import jwt
@@ -48,10 +49,33 @@ def test_forged_token_401(client):
     assert r.status_code == 401
 
 
+def jwt_with(claims):
+    """비밀키는 맞지만 클레임을 마음대로 정한 JWT."""
+    return jwt.encode(claims, SECRET, algorithm="HS256")
+
+
 def test_unknown_user_401(client):
-    token = jwt.encode({"sub": "nobody"}, SECRET, algorithm="HS256")
+    token = jwt_with({"sub": "nobody", "exp": datetime.now(timezone.utc) + timedelta(hours=1)})
     r = client.post("/query", json={"question": "이번 달 팀별 비용"}, headers={"Authorization": f"Bearer {token}"})
     assert r.status_code == 401
+
+
+def test_expired_token_401(client):
+    token = api.issue_dummy_token("hbe-lead-01", ttl=timedelta(seconds=-1))
+    r = client.post("/query", json={"question": "이번 달 팀별 비용"}, headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 401
+
+
+def test_token_without_exp_401(client):
+    r = client.post("/query", json={"question": "이번 달 팀별 비용"},
+                    headers={"Authorization": f"Bearer {jwt_with({'sub': 'hbe-lead-01'})}"})
+    assert r.status_code == 401
+
+
+def test_issued_token_expires_in_one_hour():
+    claims = jwt.decode(api.issue_dummy_token("hbe-lead-01"), SECRET, algorithms=["HS256"])
+    left = claims["exp"] - datetime.now(timezone.utc).timestamp()
+    assert 3500 < left <= 3600
 
 
 def test_none_algorithm_401(client):
