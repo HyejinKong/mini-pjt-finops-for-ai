@@ -77,8 +77,9 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
 ## 묶음 5. 시간이 남으면
 - [x] 5-0 (10분) seed 를 `seed_ce738e162660.v1.2.0.yaml` 로 백업하고 v1.3.0 으로 고친다: 채점 규칙에 숫자 근거(answer 의 금액·원화·비율이 모두 contexts 에 있음)를 더한다
   - 확인: seed 의 채점 설명과 acceptance 기준에 네 규칙이 모두 있고, YAML 로 읽힌다
-- [ ] 5-1 (30분) JWT 모드 점검: `AUTH_MODE=jwt` 로 전체 테스트와 `run_eval.py --auth jwt --llm stub` 을 돌린다
+- [x] 5-1 (30분) JWT 모드 점검: `AUTH_MODE=jwt` 로 전체 테스트와 `run_eval.py --auth jwt --llm stub` 을 돌린다
   - 확인: static 모드와 통과 수가 같다
+  - 결과(2026-10-22): 코드 수정 없이 jwt 모드 pytest 91건 통과, stub 12/12(static 과 같음)
 - [ ] 5-2 (45분) JWT 에 `exp` 만료 클레임(기본 1시간)을 넣고 검증 때 `exp`·`sub` 를 필수로 한다. 시연용 발급 명령(`python -m src.api issue hbe-lead-01`, api.py 안에)을 더한다
   - 확인: 만료 토큰·`exp` 없는 토큰 401 테스트 통과, 발급 명령으로 받은 토큰으로 q01 이 답한다
 - [ ] 5-3 (1시간) 간단한 UI(보너스): `src/api.py` 안의 HTML 문자열로 `GET /` 페이지 하나. 토큰 붙여넣기 칸·질문 칸·예시 질문 버튼, answer 와 접을 수 있는 contexts·trace. 서버는 토큰 목록을 내주지 않는다(새 파일 없음, 폴더 구조 유지)
