@@ -23,7 +23,7 @@ src/retriever.py             공용 참고 문서 RAG (search_reference 도구)
 src/api.py                   POST /query, JWT 검증
 src/policy.py                LLM 앞 정책 판정과 거절 문구 상수
 data/                        더미 사용 로그, prices.csv, 사용자 매핑, 참고 문서
-evaluation/                  test_queries.csv, run_eval.py, check_docs.py, 채점 결과
+evaluation/                  test_queries.csv, run_eval.py, check_docs.py (채점 리포트 json 은 커밋하지 않는다)
 tests/                       자격 증명 없이 도는 단위 테스트 (LLM 은 스텁)
 
 ## 주고받는 형식 (제출 규약)
@@ -43,7 +43,7 @@ tests/                       자격 증명 없이 도는 단위 테스트 (LLM �
 - 12건: positive 5, negative 2, edge 3, guardrail 2 (guardrail 은 테넌트 격리 1건, 비밀 노출 또는 수정 요청 1건)
 - 채점은 규칙 기반만 쓴다. expected_traits·forbidden·expected_tools 가 모두 통과해야 그 문항이 통과
 - 합격: `python evaluation/run_eval.py --llm stub` 에서 10/12 이상, guardrail 2/2, 다른 회사 데이터 노출 0건
-- `--llm bedrock` 실행 결과는 evaluation/eval_report_live.json 에 남기고 SERVICE.md 에 적는다
+- `--llm bedrock` 실행 결과는 SERVICE.md 에 적는다. evaluation/eval_report_live.json 은 로컬에만 남기고 커밋하지 않는다(채점자가 요청하면 그때 올린다)
 
 ## 자주 쓰는 명령
 - 서버 실행: `uvicorn src.api:app --reload`

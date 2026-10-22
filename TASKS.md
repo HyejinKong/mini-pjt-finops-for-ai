@@ -7,6 +7,7 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
 - 인증: 로그인은 만들지 않는다. 기본은 회사별 고정 토큰 2개(`AUTH_MODE=static`). 지금의 서명 JWT 코드는 지우지 않고 `AUTH_MODE=jwt` 선택 모드로 남긴다
 - 회사명: 저장소가 공개되므로 가상 이름으로 바꾼다. 과거 이력은 다시 쓰지 않고 새 커밋으로만 바꾼다
 - 커밋: 묶음 3부터는 작업 하나에 커밋 하나(확인 통과 후, 체크 갱신 포함)
+- 채점 리포트: `evaluation/eval_report_live.json` 은 커밋하지 않고 결과는 SERVICE.md 에만 적는다. 채점자가 요청하면 그때 올린다
 - 유지: 미귀속 별도 줄, 시간이 부족하면 what-if(`simulate_model_swap`)를 가장 먼저 미룬다
 
 | 기존 | 새 이름 | tenant_id | 사용자 접두어 | 토큰 환경변수 |
@@ -58,12 +59,12 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
 - 커밋: 작업마다 하나(3-1 feat(retriever), 3-2 fix(agent), 3-3 feat(tools))
 
 ## 묶음 4. 문서와 실제 모델 채점 (3일차)
-- [ ] 4-1 (40분) `CLAUDE.md` 의 인증 항목(기술 스택, api.py 설명, 주고받는 형식, 테넌트 규칙, 비밀 값)을 고정 토큰 기본·JWT 선택으로 고친다. seed 를 `seed_ce738e162660.v1.1.0.yaml` 로 백업하고 v1.2.0 으로 고친다
+- [ ] 4-1 (40분) `CLAUDE.md` 의 인증 항목(기술 스택, api.py 설명, 주고받는 형식, 테넌트 규칙, 비밀 값)을 고정 토큰 기본·JWT 선택으로 고친다. seed 를 `seed_ce738e162660.v1.1.0.yaml` 로 백업하고 v1.2.0 으로 고친다(인증, 가상 회사명, live 리포트는 SERVICE.md 에만 기록)
   - 확인: `git grep -n "JWT" CLAUDE.md` 의 모든 줄이 "선택 모드" 문맥이고, seed 에 회사명이 없다
 - [ ] 4-2 (45분) `evaluation/check_docs.py`: SERVICE.md·CLAUDE.md 의 필수 섹션, 폴더 구조, 거절 문구 상수 일치를 검사한다
   - 확인: `python evaluation/check_docs.py` 종료 코드 0
-- [ ] 4-3 (40분) `python evaluation/run_eval.py --llm bedrock` 실행, 결과를 `evaluation/eval_report_live.json` 에 저장하고 SERVICE.md 5장 "미측정" 을 실제 통과율로 바꾼다
-  - 확인: eval_report_live.json 이 있고 SERVICE.md 5장에 카테고리별·전체 통과율이 적혀 있다
+- [ ] 4-3 (40분) `python evaluation/run_eval.py --llm bedrock` 실행(리포트 json 은 로컬에만, 커밋 안 함), SERVICE.md 5장 "미측정" 을 실제 통과율로 바꾼다
+  - 확인: `git status` 에 eval_report_live.json 이 안 보이고, SERVICE.md 5장에 카테고리별·전체 통과율이 적혀 있다
 - 커밋: 작업마다 하나(4-1 docs, 4-2 feat(eval), 4-3 docs)
 
 ## 묶음 5. 시간이 남으면
