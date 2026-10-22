@@ -210,6 +210,15 @@ APP_HTML = r"""<!doctype html>
                           background:linear-gradient(135deg, var(--accent), var(--accent-2)); }
   .composer button.send:disabled { opacity:.5; cursor:wait; }
   .composer .row { margin-top:6px; font-size:11.5px; color:var(--faint); }
+  .clickable { cursor:pointer; }
+  .clickable:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+  .composer .box.flash { animation:flash 1s ease; }
+  @keyframes flash { 0% { box-shadow:0 0 0 0 rgba(59,110,245,.55); } 100% { box-shadow:0 0 0 10px rgba(59,110,245,0); } }
+  .menu { position:absolute; z-index:7; min-width:200px; padding:6px; border:1px solid var(--line); border-radius:12px; background:var(--panel); box-shadow:var(--shadow-hover); }
+  .menu-h { padding:6px 8px 8px; font-size:12px; color:var(--faint); }
+  .menu button { display:block; width:100%; padding:7px 10px; border:0; border-radius:8px; background:transparent; color:var(--text); font:inherit; font-size:13px; text-align:left; cursor:pointer; }
+  .menu button:hover, .menu button:focus-visible { background:var(--accent-soft); color:var(--accent); outline:0; }
+  @media (prefers-reduced-motion: reduce) { .composer .box.flash { animation:none; } }
 </style>
 </head>
 <body>
@@ -339,6 +348,17 @@ APP_HTML = r"""<!doctype html>
   function ratio(value, max) { return max > 0 ? Math.max(0, Number(value)) / max : 0; }
   function heatStep(value, max) { return Math.min(4, Math.floor(ratio(value, max) * 5)); }
   // dash:end
+  // ask:start 패널 항목으로 질문 문장을 만든다. 달은 도구 결과의 period·this_month·last_month 를 그대로 쓴다
+  function teamQuestion(month, team) { return `${month} ${team} 서비스별 비용 알려줘`; }
+  function swapQuestion(month, from, to) { return `${month} ${from}를 ${to}로 바꾸면 비용이 얼마나 줄어?`; }
+  function momQuestion(m, dim, name) {
+    const verb = m.direction === "increase" ? "늘었어" : "줄었어", span = `${m.last_month} 대비 ${m.this_month}`;
+    const where = m.scope.team ? `${m.scope.team}에서 ` : m.scope.service ? `${m.scope.service} 서비스에서 ` : "";
+    if (dim === "team") return `${where}${span} ${name} 모델별로 뭐가 ${verb}?`;
+    if (dim === "service") return `${where}${span} ${name} 서비스 비용이 왜 ${verb}? ${m.scope.team ? "모델별로" : "팀별로"} 보여줘`;
+    return `${where}${span} ${name} 비용이 ${m.scope.team ? "어느 서비스에서" : "어느 팀에서"} ${verb}?`;
+  }
+  // ask:end
 
   const $ = id => document.getElementById(id);
   const SVG = "http://www.w3.org/2000/svg";
@@ -439,8 +459,15 @@ APP_HTML = r"""<!doctype html>
     const wrap = h("div", { class: "grid bars section" });
     for (const dim of ["team", "service", "model"]) {
       const b = breakdown[dim], max = Math.max(...[...b.rows.map(r => r.usd), b.unattributed.usd].map(Number));
-      const panel = h("div", { class: "panel" }, title(`${DIM_LABEL[dim]}별 비용`, `${b.period} · 미귀속은 따로`));
-      for (const r of b.rows) panel.append(barRow(r[dim], r, max, false, DIM_LABEL[dim]));
+      const cap = dim === "team" ? " · 누르면 서비스별 질문" : dim === "model" ? " · 누르면 모델 교체 질문" : "";
+      const panel = h("div", { class: "panel" }, title(`${DIM_LABEL[dim]}별 비용`, `${b.period} · 미귀속은 따로${cap}`));
+      const models = b.rows.map(r => r.model);
+      for (const r of b.rows) {
+        const row = barRow(r[dim], r, max, false, DIM_LABEL[dim]);
+        if (dim === "team") clickable(row, () => fillQuestion(teamQuestion(b.period, r.team)));
+        if (dim === "model" && models.length > 1) clickable(row, e => openSwapMenu(row, b.period, r.model, models.filter(x => x !== r.model)));
+        panel.append(row);
+      }
       panel.append(barRow("미귀속", b.unattributed, max, true, DIM_LABEL[dim]));
       panel.append(h("div", { class: "hint" }, `합계 ${usd(b.total.usd)} (미귀속 포함)`));
       wrap.append(panel);
@@ -484,9 +511,45 @@ APP_HTML = r"""<!doctype html>
 
   function momList(m, dim) {
     if (!m.items.length) return h("p", { class: "hint" }, "해당 항목이 없습니다.");
-    return h("ol", { class: "top" }, ...m.items.map(i => h("li", {}, `${i[dim]} `, h("span", { class: "d" }, signedUsd(i.delta_usd)),
-      h("span", { class: "s" }, ` (${pct(i.pct_or_new)}) · ${usd(i.last_usd)} → ${usd(i.this_usd)}`))));
+    return h("ol", { class: "top" }, ...m.items.map(i => {
+      const li = h("li", {}, `${i[dim]} `, h("span", { class: "d" }, signedUsd(i.delta_usd)),
+        h("span", { class: "s" }, ` (${pct(i.pct_or_new)}) · ${usd(i.last_usd)} → ${usd(i.this_usd)}`));
+      return clickable(li, () => fillQuestion(momQuestion(m, dim, i[dim])));
+    }));
   }
+  // 패널 항목을 누르면 질문창에 채우기만 한다(보내지 않는다). 키보드로도 누를 수 있다
+  function clickable(el, action) {
+    el.classList.add("clickable");
+    el.setAttribute("role", "button");
+    el.setAttribute("tabindex", "0");
+    el.onclick = action;
+    el.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); action(e); } };
+    return el;
+  }
+  function fillQuestion(text) {
+    closeSwapMenu();
+    q.value = text;
+    q.focus();
+    q.setSelectionRange(text.length, text.length);
+    const box = q.closest(".box");
+    box.classList.remove("flash"); void box.offsetWidth; box.classList.add("flash");
+    if (matchMedia("(max-width: 960px)").matches) box.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  let swapMenu = null;
+  function closeSwapMenu() { if (swapMenu) { swapMenu.remove(); swapMenu = null; } }
+  function openSwapMenu(anchor, month, from, targets) {
+    closeSwapMenu();
+    hideTip();
+    swapMenu = h("div", { class: "menu", role: "menu" }, h("div", { class: "menu-h" }, `${from}를 무엇으로 바꿀까요?`),
+      ...targets.map(t => { const b = h("button", { type: "button", role: "menuitem" }, t); b.onclick = () => fillQuestion(swapQuestion(month, from, t)); return b; }));
+    const main = document.querySelector("main"), box = main.getBoundingClientRect(), r = anchor.getBoundingClientRect();
+    swapMenu.style.left = (r.left - box.left + 8) + "px";
+    swapMenu.style.top = (r.bottom - box.top + 4) + "px";
+    main.append(swapMenu);
+    swapMenu.querySelector("button").focus();
+  }
+  document.addEventListener("click", e => { if (swapMenu && !swapMenu.contains(e.target) && !e.target.closest(".barrow")) closeSwapMenu(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeSwapMenu(); });
   function renderMom(mom, scopeValue, names) {
     const sel = h("select", { id: "scope" }, h("option", { value: "" }, "회사 전체"),
       ...names.team.map(t => h("option", { value: "team:" + t }, `팀: ${t}`)),
@@ -495,7 +558,7 @@ APP_HTML = r"""<!doctype html>
     sel.onchange = () => load();
     const any = Object.values(mom.increase)[0];
     const panel = h("div", { class: "panel section" },
-      title("전월 대비 상위 3", `${any.last_month} → ${any.this_month} · USD 증감액 순`, h("span", { class: "grow" }), h("label", { class: "cap" }, "범위 ", sel)));
+      title("전월 대비 상위 3", `${any.last_month} → ${any.this_month} · USD 증감액 순 · 누르면 원인 질문`, h("span", { class: "grow" }), h("label", { class: "cap" }, "범위 ", sel)));
     const cols = h("div", { class: "grid mom" });
     for (const [direction, title] of [["increase", "가장 많이 늘어난 항목"], ["decrease", "가장 많이 줄어든 항목"]]) {
       const col = h("div", {}, h("div", { class: "colh" }, h("span", { class: "delta " + (direction === "increase" ? "up" : "down") }, icon(direction === "increase" ? "up" : "down", 12)), title));
