@@ -22,9 +22,9 @@ def tools_for(tenant):
 @pytest.mark.parametrize("month", ["2026-09", "2026-08"])
 @pytest.mark.parametrize("group_by,key", [("team", "team"), ("service", "service"), ("feature", "feature"), ("model", "model_id")])
 def test_breakdown_matches_expected(tenant, month, group_by, key):
-    out = tools_for(tenant)["get_cost_breakdown"].invoke({"group_by": group_by, "month": month})
+    out = tools_for(tenant)["get_cost_breakdown"].invoke({"group_by": [group_by], "month": month})
     exp = EXP[tenant]["by_month"][month]
-    assert {r["key"]: r["usd"] for r in out["rows"]} == exp[key]
+    assert {r[group_by]: r["usd"] for r in out["rows"]} == exp[key]
     assert out["unattributed"]["usd"] == exp["unattributed"]
     assert out["total"]["usd"] == exp["total"]
 
@@ -33,8 +33,8 @@ def test_breakdown_matches_expected(tenant, month, group_by, key):
 def test_drilldown_by_team(tenant):
     tool = tools_for(tenant)["get_cost_breakdown"]
     for team, services in EXP[tenant]["drilldown_service_by_team"].items():
-        out = tool.invoke({"group_by": "service", "team": team})
-        assert {r["key"]: r["usd"] for r in out["rows"]} == services
+        out = tool.invoke({"group_by": ["service"], "team": team})
+        assert {r["service"]: r["usd"] for r in out["rows"]} == services
         assert "unattributed" not in out
 
 
@@ -49,7 +49,7 @@ def test_mom_matches_expected(tenant, direction, dimension, key):
 
 
 def test_krw_uses_fixed_rate():
-    out = tools_for("panda-soft")["get_cost_breakdown"].invoke({"group_by": "team"})
+    out = tools_for("panda-soft")["get_cost_breakdown"].invoke({"group_by": ["team"]})
     for r in out["rows"]:
         assert r["krw"] == round(float(r["usd"]) * 1400)
 
@@ -63,14 +63,48 @@ def test_mom_krw_matches_usd(direction):
 
 
 def test_total_includes_unattributed_once():
-    out = tools_for("panda-soft")["get_cost_breakdown"].invoke({"group_by": "model"})
+    out = tools_for("panda-soft")["get_cost_breakdown"].invoke({"group_by": ["model"]})
     cents = lambda m: round(float(m["usd"]) * 100)
     assert cents(out["tagged_total"]) == sum(cents(r) for r in out["rows"])
     assert abs(cents(out["total"]) - cents(out["tagged_total"]) - cents(out["unattributed"])) <= 1
 
 
 def test_unknown_team_returns_error_not_amounts():
-    out = tools_for("honeybee-electronics")["get_cost_breakdown"].invoke({"group_by": "service", "team": "물류팀"})
+    out = tools_for("honeybee-electronics")["get_cost_breakdown"].invoke({"group_by": ["service"], "team": "물류팀"})
+    assert "error" in out and "rows" not in out
+
+
+COLUMN = {"team": "team", "service": "service", "feature": "feature", "model": "model_id"}
+PAIRS = [("team", "service"), ("team", "feature"), ("team", "model"), ("service", "feature"), ("service", "model"),
+         ("feature", "model")]
+
+
+@pytest.mark.parametrize("tenant", TENANTS)
+@pytest.mark.parametrize("month", ["2026-09", "2026-08"])
+@pytest.mark.parametrize("a,b", PAIRS)
+def test_cross_table_matches_expected(tenant, month, a, b):
+    out = tools_for(tenant)["get_cost_breakdown"].invoke({"group_by": [a, b], "month": month})
+    exp = EXP[tenant]["multi"]["cross"][month][f"{COLUMN[a]},{COLUMN[b]}"]
+    assert {(r[a], r[b]): r["usd"] for r in out["rows"]} == {(c[COLUMN[a]], c[COLUMN[b]]): c["usd"] for c in exp}
+    by_month = EXP[tenant]["by_month"][month]
+    for d in (a, b):
+        assert {s[d]: s["usd"] for s in out["subtotals"][d]} == by_month[COLUMN[d]]
+    assert out["total"]["usd"] == by_month["total"] and out["tagged_total"]["usd"] == by_month["tagged"]
+
+
+@pytest.mark.parametrize("tenant", TENANTS)
+@pytest.mark.parametrize("group_by", [["model"], ["team", "model"]])
+def test_unattributed_split_by_model_only(tenant, group_by):
+    out = tools_for(tenant)["get_cost_breakdown"].invoke({"group_by": group_by})
+    exp = EXP[tenant]["multi"]["unattributed_by_model"]["2026-09"]
+    assert {m["model"]: m["usd"] for m in out["unattributed"]["by_model"]} == exp
+    assert out["unattributed"]["usd"] == EXP[tenant]["by_month"]["2026-09"]["unattributed"]
+    assert "by_model" not in tools_for(tenant)["get_cost_breakdown"].invoke({"group_by": ["team"]})["unattributed"]
+
+
+@pytest.mark.parametrize("group_by", [[], ["team", "team"], ["team", "service", "model"]])
+def test_group_by_must_be_one_or_two_distinct(group_by):
+    out = tools_for("panda-soft")["get_cost_breakdown"].invoke({"group_by": group_by})
     assert "error" in out and "rows" not in out
 
 
@@ -88,10 +122,10 @@ def test_whatif_matches_expected(tenant):
 
 def test_whatif_before_equals_actual_cost():
     tools = tools_for("honeybee-electronics")
-    actual = tools["get_cost_breakdown"].invoke({"group_by": "model", "team": "고객지원팀"})
+    actual = tools["get_cost_breakdown"].invoke({"group_by": ["model"], "team": "고객지원팀"})
     for row in actual["rows"]:
-        to_model = "claude-haiku" if row["key"] == "nova-lite" else "nova-lite"
-        out = tools["simulate_model_swap"].invoke({"from_model": row["key"], "to_model": to_model, "team": "고객지원팀"})
+        to_model = "claude-haiku" if row["model"] == "nova-lite" else "nova-lite"
+        out = tools["simulate_model_swap"].invoke({"from_model": row["model"], "to_model": to_model, "team": "고객지원팀"})
         assert out["before"]["usd"] == row["usd"]
 
 
@@ -115,7 +149,8 @@ def test_tool_output_has_no_other_tenant_data():
     pds_amounts = set(EXP["panda-soft"]["by_month"]["2026-09"]["team"].values()) | {EXP["panda-soft"]["by_month"]["2026-09"]["total"]}
     tools = tools_for("honeybee-electronics")
     outputs = [
-        tools["get_cost_breakdown"].invoke({"group_by": g}) for g in ("team", "service", "feature", "model")
+        tools["get_cost_breakdown"].invoke({"group_by": g})
+        for g in (["team"], ["service"], ["feature"], ["model"], ["team", "model"])
     ] + [tools["get_mom_change"].invoke({"dimension": d}) for d in ("team", "service", "model")]
     text = json.dumps(outputs, ensure_ascii=False)
     assert "판다소프트" not in text

@@ -15,7 +15,7 @@ from src.tools import TenantRepo, build_tools
 def model_breakdown():
     """판다소프트 9월 모델별 집계 결과."""
     tools = {t.name: t for t in build_tools(TenantRepo("panda-soft"))}
-    return tools["get_cost_breakdown"].invoke({"group_by": "model", "month": "2026-09"})
+    return tools["get_cost_breakdown"].invoke({"group_by": ["model"], "month": "2026-09"})
 
 
 def contexts_of(out):
@@ -30,7 +30,7 @@ def money(m):
 
 def test_grounded_answer_passes():
     out = model_breakdown()
-    answer = (f"{out['rows'][0]['key']} {money(out['rows'][0])}, 미귀속 {money(out['unattributed'])}, "
+    answer = (f"{out['rows'][0]['model']} {money(out['rows'][0])}, 미귀속 {money(out['unattributed'])}, "
               f"전체 합계 {money(out['total'])}, 미귀속 제외 {money(out['tagged_total'])}")
     assert check_grounded(answer, contexts_of(out)) == []
 
@@ -46,7 +46,7 @@ def test_invented_total_is_caught():
 
 def test_invented_share_is_caught():
     out = model_breakdown()
-    answer = f"{out['rows'][0]['key']} 가 전체의 약 97% 입니다. ${out['rows'][0]['usd']}"
+    answer = f"{out['rows'][0]['model']} 가 전체의 약 97% 입니다. ${out['rows'][0]['usd']}"
     assert check_grounded(answer, contexts_of(out)) == ["97"]
 
 

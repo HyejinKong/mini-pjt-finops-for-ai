@@ -98,8 +98,9 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
   - 막힘 → 해결(2026-10-22): 범위 지정 전월 대비(검색플랫폼팀 모델별 증가)에서 두 회사 증가액이 $0.04 로 겹쳐 생성기가 멈췄다. 사용자 결정으로 새 금액까지 겹치지 않는 시드로 데이터를 다시 만든다
   - 결과(2026-10-22): 생성 성공(겹침 0, 9월 미귀속 14.5%·14.8%), 기존 키 유지·`multi` 추가, 교차 합계가 단일 기준 합계와 일치, pytest 95건 통과, stub 11/12(q03 만 실패, 6-2 에서 해결)
   - 영향: 모든 금액·정답·인-아웃 세트 기대값이 바뀐다. 위 "참고" 줄과 SERVICE.md 5장의 금액은 재생성 전 데이터 기준 기록이다. bedrock 결과는 6-4 에서 새 데이터로 다시 적는다
-- [ ] 6-2 (1시간) `src/tools.py` `get_cost_breakdown(group_by: list, month, team, service)`: 행은 기준 이름을 필드로 갖고(`{"team": .., "model": .., "usd": .., "krw": ..}`), 두 기준이면 `subtotals`(기준별 소계)를 더한다. `total`·`tagged_total`·`unattributed` 는 지금 의미 그대로이고, model 이 기준에 있으면 `unattributed.by_model` 을 더한다. `src/agent.py` 프롬프트(교차 표 질문은 두 기준 한 번 호출, 합계·소계는 도구 값만), `evaluation/run_eval.py` stub 계획·답변(새 q03 은 `group_by=["team","model"]` 한 번 호출), 기존 테스트를 새 형식으로 고친다
+- [x] 6-2 (1시간) `src/tools.py` `get_cost_breakdown(group_by: list, month, team, service)`: 행은 기준 이름을 필드로 갖고(`{"team": .., "model": .., "usd": .., "krw": ..}`), 두 기준이면 `subtotals`(기준별 소계)를 더한다. `total`·`tagged_total`·`unattributed` 는 지금 의미 그대로이고, model 이 기준에 있으면 `unattributed.by_model` 을 더한다. `src/agent.py` 프롬프트(교차 표 질문은 두 기준 한 번 호출, 합계·소계는 도구 값만), `evaluation/run_eval.py` stub 계획·답변(새 q03 은 `group_by=["team","model"]` 한 번 호출), 기존 테스트를 새 형식으로 고친다
   - 확인: `python -m pytest -q` 통과(교차 합계·소계·미귀속 모델별이 6-1 정답과 일치하는 테스트 추가), `python evaluation/run_eval.py --llm stub` 12/12 유지
+  - 결과(2026-10-22): pytest 126건 통과(교차 표 24건·미귀속 모델별·group_by 검증 추가), stub 12/12. 참고 문서 `data/reference/supported_questions.md` 예시도 교차 표 질문으로 바꿨다
 - [ ] 6-3 (45분) `get_mom_change` 에 `team`·`service` 범위 인자와 1~2개 기준 `dimension` 목록을 더한다. 순위는 지금처럼 USD 증감액 기준, 미귀속은 범위를 좁히면 빠진다(집계와 같은 규칙)
   - 확인: `python -m pytest -q` 통과(범위·두 기준 전월 대비가 6-1 정답과 일치), stub 12/12 유지
 - [ ] 6-4 (30분) `--llm bedrock` 재실행과 교차 표 실제 질문 1회("9월 팀별·모델별 비용 표로 보여줘")

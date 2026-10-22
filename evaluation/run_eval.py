@@ -50,15 +50,15 @@ CONTEXT_NUMBER = re.compile(r"\d+(?:\.\d+)?")
 # stub 모드의 도구 호출 계획. 질문 문자열 → (도구 이름, 인자) 목록.
 # 계획이 없는 질문은 STUB_NO_PLAN 으로 답한다.
 STUB_PLANS = {
-    "이번 달 팀별 비용 알려줘": [("get_cost_breakdown", {"group_by": "team"})],
-    "고객지원팀 서비스별 9월 비용은?": [("get_cost_breakdown", {"group_by": "service", "team": "고객지원팀"})],
-    "9월 모델별 비용 알려줘": [("get_cost_breakdown", {"group_by": "model"})],
+    "이번 달 팀별 비용 알려줘": [("get_cost_breakdown", {"group_by": ["team"]})],
+    "고객지원팀 서비스별 9월 비용은?": [("get_cost_breakdown", {"group_by": ["service"], "team": "고객지원팀"})],
+    "9월 팀별·모델별 비용 표로 보여줘": [("get_cost_breakdown", {"group_by": ["team", "model"]})],
     "지난달 대비 이번 달 팀별 비용이 왜 늘었어?": [("get_mom_change", {"dimension": "team"})],
     "claude-sonnet를 claude-haiku로 바꾸면 9월 비용이 얼마나 줄어?": [
         ("simulate_model_swap", {"from_model": "claude-sonnet", "to_model": "claude-haiku"})],
-    "물류팀 비용 알려줘": [("get_cost_breakdown", {"group_by": "service", "team": "물류팀"})],
+    "물류팀 비용 알려줘": [("get_cost_breakdown", {"group_by": ["service"], "team": "물류팀"})],
     "모델별로 지난달 대비 9월 비용 변화 보여줘. 새로 생긴 것도 있어?": [("get_mom_change", {"dimension": "model"})],
-    "9월 비용 중 태그 없는 미귀속 비용은 얼마야?": [("get_cost_breakdown", {"group_by": "team"})],
+    "9월 비용 중 태그 없는 미귀속 비용은 얼마야?": [("get_cost_breakdown", {"group_by": ["team"]})],
     "지난달보다 비용이 줄어든 서비스 알려줘": [("get_mom_change", {"dimension": "service", "direction": "decrease"})],
 }
 STUB_NO_PLAN = "stub: 이 질문에 쓸 도구 호출 계획이 없습니다."
@@ -86,11 +86,16 @@ def compose_answer(result: dict) -> str:
         return result["error"]
     lines = []
     if "rows" in result:
-        lines.append(f"{result['period']} {result['group_by']}별 비용")
-        lines += [f"- {r['key']}: {money(r['usd'], r['krw'])}" for r in result["rows"]]
+        dims = result["group_by"]
+        lines.append(f"{result['period']} {' × '.join(dims)}별 비용")
+        lines += [f"- {' / '.join(r[d] for d in dims)}: {money(r['usd'], r['krw'])}" for r in result["rows"]]
+        for d, subs in result.get("subtotals", {}).items():
+            lines.append(f"{d} 소계")
+            lines += [f"- {s[d]}: {money(s['usd'], s['krw'])}" for s in subs]
         if "unattributed" in result:
             u = result["unattributed"]
             lines.append(f"- {u['key']}(순위 제외): {money(u['usd'], u['krw'])}")
+            lines += [f"  - {m['model']}: {money(m['usd'], m['krw'])}" for m in u.get("by_model", [])]
         lines.append(f"- 합계: {money(result['total']['usd'], result['total']['krw'])}")
     elif "before" in result:
         word = {"saving": "절감", "increase": "증가", "no_change": "변화 없음"}[result["change"]["kind"]]

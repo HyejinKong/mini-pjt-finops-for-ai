@@ -74,8 +74,10 @@ class TenantRepo:
         """금액을 USD 문자열과 원화 정수로 함께 돌려준다."""
         return {"usd": to_usd(e8), "krw": to_krw(e8, self.settings["krw_rate"])}
 
-    def sum_by(self, month: str, key: str, team: str | None = None, service: str | None = None) -> tuple[dict, int]:
-        """month 비용을 key 별로 합산한다. 태그된 행 합계(dict)와 미귀속 합계를 돌려준다."""
+    def sum_by(self, month: str, key: str | tuple[str, ...], team: str | None = None,
+               service: str | None = None) -> tuple[dict, int]:
+        """month 비용을 key 별로 합산한다. key 가 튜플이면 그 컬럼 값들의 조합별로 합산한다.
+        태그된 행 합계(dict)와 미귀속 합계를 돌려준다."""
         groups, unattributed = {}, 0
         for r in self.rows:
             if not r["date"].startswith(month):
@@ -88,8 +90,17 @@ class TenantRepo:
                 continue
             if service is not None and r["service"] != service:
                 continue
-            groups[r[key]] = groups.get(r[key], 0) + self.cost_e8(r)
+            group = tuple(r[k] for k in key) if isinstance(key, tuple) else r[key]
+            groups[group] = groups.get(group, 0) + self.cost_e8(r)
         return groups, unattributed
+
+    def unattributed_by(self, month: str, key: str) -> dict:
+        """month 의 미귀속(태그 없는) 비용을 key 컬럼별로 나눈다. 모델처럼 태그와 무관한 컬럼에만 쓴다."""
+        out = {}
+        for r in self.rows:
+            if r["date"].startswith(month) and not r["team"]:
+                out[r[key]] = out.get(r[key], 0) + self.cost_e8(r)
+        return out
 
     def scoped_rows(self, month: str, team: str | None = None, service: str | None = None,
                     feature: str | None = None) -> list[dict]:
@@ -113,32 +124,50 @@ def build_tools(repo: TenantRepo) -> list:
 
     @tool
     def get_cost_breakdown(
-        group_by: Literal["team", "service", "feature", "model"],
+        group_by: list[Literal["team", "service", "feature", "model"]],
         month: str = "2026-09",
         team: str | None = None,
         service: str | None = None,
     ) -> dict:
-        """현재 사용자 회사의 Bedrock 비용을 팀·서비스·기능·모델별로 집계한다.
+        """현재 사용자 회사의 Bedrock 비용을 기준 1~2개(group_by 목록)로 집계한다.
+        기준 하나면 팀별·모델별 같은 목록, 두 개면 ["team", "model"] 처럼 팀 × 모델 교차 표다.
+        rows 의 각 행은 기준 이름(team, service, feature, model)을 필드로 갖는다.
+        두 기준이면 subtotals 에 기준별 소계가 있다. 소계·합계는 직접 계산하지 말고 이 값을 쓴다.
         드릴다운하려면 team 이나 service 로 범위를 좁힌다. month 는 'YYYY-MM' 형식이다.
         금액은 USD(소수 둘째 자리)와 원화 환산값(krw)으로 돌려준다.
-        태그가 없는 비용은 '미귀속'(unattributed)으로 따로 돌려준다.
+        태그가 없는 비용은 '미귀속'(unattributed)으로 따로 돌려준다. model 이 기준에 있으면
+        unattributed.by_model 에 미귀속의 모델별 금액이 있다(팀·서비스·기능에는 나누지 않는다).
         total 은 미귀속을 포함한 전체 합계이고, 미귀속을 뺀 합계는 tagged_total 이다.
-        '이번 달 팀별 비용', '고객지원팀 서비스별 비용', '9월 모델별 비용' 같은 질문에 쓴다."""
+        '이번 달 팀별 비용', '고객지원팀 서비스별 비용', '9월 팀별·모델별 비용 표' 같은 질문에 쓴다."""
+        dims = list(group_by)
+        if not 1 <= len(dims) <= 2 or len(set(dims)) != len(dims):
+            return {"error": "group_by 는 서로 다른 기준 1~2개 목록입니다.", "allowed": list(GROUP_KEYS)}
         if team is not None and team not in repo.names("team"):
             return {"error": f"'{team}' 팀은 이 회사 데이터에 없습니다.", "teams": sorted(repo.names("team"))}
         if service is not None and service not in repo.names("service"):
             return {"error": f"'{service}' 서비스는 이 회사 데이터에 없습니다.", "services": sorted(repo.names("service"))}
-        groups, unattributed = repo.sum_by(month, GROUP_KEYS[group_by], team, service)
-        rows = [{"key": k, **repo.money(v)} for k, v in sorted(groups.items(), key=lambda kv: -kv[1])]
+        groups, unattributed = repo.sum_by(month, tuple(GROUP_KEYS[d] for d in dims), team, service)
+        rows = [{**dict(zip(dims, k)), **repo.money(v)} for k, v in sorted(groups.items(), key=lambda kv: (-kv[1], kv[0]))]
         result = {
             "period": month,
             "scope": {"team": team, "service": service},
-            "group_by": group_by,
+            "group_by": dims,
             "rows": rows,
             "total": repo.money(sum(groups.values()) + unattributed),
         }
+        if len(dims) == 2:
+            result["subtotals"] = {}
+            for i, d in enumerate(dims):
+                sub = {}
+                for k, v in groups.items():
+                    sub[k[i]] = sub.get(k[i], 0) + v
+                result["subtotals"][d] = [{d: k, **repo.money(v)} for k, v in sorted(sub.items(), key=lambda kv: (-kv[1], kv[0]))]
         if team is None and service is None:
             result["unattributed"] = {"key": UNATTRIBUTED, **repo.money(unattributed)}
+            if "model" in dims:
+                by_model = repo.unattributed_by(month, "model_id")
+                result["unattributed"]["by_model"] = [
+                    {"model": k, **repo.money(v)} for k, v in sorted(by_model.items(), key=lambda kv: (-kv[1], kv[0]))]
             result["tagged_total"] = repo.money(sum(groups.values()))
         return result
 
