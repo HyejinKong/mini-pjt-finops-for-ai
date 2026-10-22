@@ -49,7 +49,7 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
 ## 묶음 3. 남은 도구 (2일차)
 - [x] 3-1 (1시간) `src/retriever.py`: `data/reference` 의 회사와 무관한 문서만 색인하는 `search_reference` 도구
   - 확인: `python -c "from src.retriever import search_reference; print(search_reference.invoke({'query': '환율'}))"` 결과에 fx_rate.md 의 환율이 나오고 회사명이 없다
-- [ ] 3-2 (40분) `src/agent.py` 에 search_reference 를 등록하고, 비율(%)·합계 등을 LLM 이 직접 계산하지 않게 프롬프트를 강화한다
+- [x] 3-2 (40분) `src/agent.py` 에 search_reference 를 등록하고, 비율(%)·합계 등을 LLM 이 직접 계산하지 않게 프롬프트를 강화한다
   - 확인: `python src/agent.py` 실제 호출 답변의 숫자가 모두 contexts 에 있는 값이다(직접 눈으로 대조)
   - 참고: 1-5 실제 호출에서 "검색플랫폼팀이 전체의 약 44%" 처럼 LLM 이 비율을 직접 계산했다
 - [ ] 3-3 (1시간) `src/tools.py`: `simulate_model_swap`(토큰 수 동일 가정, 입력·출력 단가 따로 재계산, "품질 차이 미반영" 문구). 시간이 부족하면 이 작업을 건너뛰고 q05 를 집계·전월 대비 문항으로 바꾼다

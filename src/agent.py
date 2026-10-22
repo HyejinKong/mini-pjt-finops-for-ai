@@ -16,13 +16,17 @@ from langchain.agents import create_agent
 from langchain_core.messages import AIMessage, ToolMessage
 
 from src.policy import classify
+from src.retriever import search_reference
 from src.tools import TenantRepo, build_tools, load_settings
 
 load_dotenv()
 
 SYSTEM_PROMPT = f"""너는 회사의 Amazon Bedrock LLM 비용을 설명하는 FinOps 도우미다.
 규칙:
-- 숫자는 도구가 돌려준 값만 그대로 쓴다. 직접 더하거나 빼거나 비율을 계산하지 않는다.
+- 숫자는 도구가 돌려준 값만 그대로 쓴다. 직접 더하거나 빼거나 나누지 않는다.
+- 도구 결과에 없는 숫자는 쓰지 않는다. '전체의 약 44%' 같은 비중, 두 금액의 차이, 합계를 새로 만들지 않는다. 비율은 도구가 준 pct_or_new 만 쓴다.
+- 질문에 맞는 도구가 없으면 비슷한 도구 결과로 추정하지 말고, 지원하는 질문 유형을 안내한다.
+- 단가·환율·용어·지원 질문 같은 회사와 무관한 설명은 search_reference 결과만 근거로 쓴다.
 - 금액은 '$1,234.56 (약 1,728,384원)' 형식으로 USD 와 도구가 준 원화(krw)를 함께 쓴다.
 - 미귀속 비용은 순위에 넣지 말고 별도 줄로 쓴다.
 - 비용이 늘거나 준 업무상 이유는 데이터에 없으므로 추측하지 않는다.
@@ -70,7 +74,7 @@ def answer(question: str, tenant_id: str, model=None) -> dict:
     decision = classify(question, tenant_id)
     if decision.refusal:
         return {"answer": decision.refusal, "contexts": [], "trace": [{"policy": decision.cls}]}
-    tools = build_tools(TenantRepo(tenant_id))
+    tools = build_tools(TenantRepo(tenant_id)) + [search_reference]
     return run_agent(question, tools, model or bedrock_model())
 
 
