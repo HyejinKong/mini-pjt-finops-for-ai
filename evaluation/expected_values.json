@@ -1,6 +1,6 @@
 {
-  "samsung-electronics": {
-    "name": "삼성전자",
+  "honeybee-electronics": {
+    "name": "꿀벌전자",
     "by_month": {
       "2026-09": {
         "team": {
@@ -231,8 +231,8 @@
       "new_model": "nova-pro"
     }
   },
-  "samsung-sds": {
-    "name": "삼성SDS",
+  "panda-soft": {
+    "name": "판다소프트",
     "by_month": {
       "2026-09": {
         "team": {

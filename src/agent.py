@@ -1,6 +1,6 @@
 """메인 에이전트: 정책 판정 후 create_agent 로 도구를 호출해 answer, contexts, trace 를 만든다.
 
-실행: python src/agent.py  (sec-lead-01 로 시험 질문 하나를 실제 Bedrock 모델에 보낸다)
+실행: python src/agent.py  (hbe-lead-01 로 시험 질문 하나를 실제 Bedrock 모델에 보낸다)
 """
 
 import json
@@ -76,7 +76,7 @@ def answer(question: str, tenant_id: str, model=None) -> dict:
 
 if __name__ == "__main__":
     users = json.loads((Path(__file__).resolve().parent.parent / "data" / "users.json").read_text(encoding="utf-8"))
-    user = next(u for u in users if u["user_id"] == "sec-lead-01")
+    user = next(u for u in users if u["user_id"] == "hbe-lead-01")
     question = "이번 달 팀별 비용 알려줘"
     print(f"사용자: {user['user_id']} ({user['tenant_id']})")
     print(f"질문: {question}\n")

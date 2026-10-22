@@ -49,34 +49,34 @@ def test_mom_matches_expected(tenant, direction, dimension, key):
 
 
 def test_krw_uses_fixed_rate():
-    out = tools_for("samsung-sds")["get_cost_breakdown"].invoke({"group_by": "team"})
+    out = tools_for("panda-soft")["get_cost_breakdown"].invoke({"group_by": "team"})
     for r in out["rows"]:
         assert r["krw"] == round(float(r["usd"]) * 1400)
 
 
 def test_unknown_team_returns_error_not_amounts():
-    out = tools_for("samsung-electronics")["get_cost_breakdown"].invoke({"group_by": "service", "team": "물류팀"})
+    out = tools_for("honeybee-electronics")["get_cost_breakdown"].invoke({"group_by": "service", "team": "물류팀"})
     assert "error" in out and "rows" not in out
 
 
 def test_tools_take_no_tenant_argument():
-    for t in build_tools(TenantRepo("samsung-electronics")):
+    for t in build_tools(TenantRepo("honeybee-electronics")):
         params = set(t.args) | set(inspect.signature(t.func).parameters)
         assert not any("tenant" in p for p in params), t.name
 
 
 def test_tool_output_has_no_other_tenant_data():
-    sds_amounts = set(EXP["samsung-sds"]["by_month"]["2026-09"]["team"].values()) | {EXP["samsung-sds"]["by_month"]["2026-09"]["total"]}
-    tools = tools_for("samsung-electronics")
+    pds_amounts = set(EXP["panda-soft"]["by_month"]["2026-09"]["team"].values()) | {EXP["panda-soft"]["by_month"]["2026-09"]["total"]}
+    tools = tools_for("honeybee-electronics")
     outputs = [
         tools["get_cost_breakdown"].invoke({"group_by": g}) for g in ("team", "service", "feature", "model")
     ] + [tools["get_mom_change"].invoke({"dimension": d}) for d in ("team", "service", "model")]
     text = json.dumps(outputs, ensure_ascii=False)
-    assert "삼성SDS" not in text
-    assert not any(f'"{a}"' in text for a in sds_amounts)
+    assert "판다소프트" not in text
+    assert not any(f'"{a}"' in text for a in pds_amounts)
 
 
 def test_unknown_tenant_rejected():
-    for bad in ("../samsung-sds", "../usage/samsung-sds", "acme"):
+    for bad in ("../panda-soft", "../usage/panda-soft", "acme"):
         with pytest.raises(ValueError):
             TenantRepo(bad)

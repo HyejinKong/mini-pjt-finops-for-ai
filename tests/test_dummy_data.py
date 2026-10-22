@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
-TENANTS = ["samsung-electronics", "samsung-sds"]
+TENANTS = ["honeybee-electronics", "panda-soft"]
 FIELDS = ["provider", "date", "team", "service", "feature", "model_id", "input_tokens", "output_tokens"]
 
 
@@ -78,8 +78,8 @@ def test_no_shared_amounts_between_tenants():
                 acc.add(str(abs(Decimal(v))))
         return acc
 
-    a = amounts(exp["samsung-electronics"]["by_month"], set())
-    b = amounts(exp["samsung-sds"]["by_month"], set())
+    a = amounts(exp["honeybee-electronics"]["by_month"], set())
+    b = amounts(exp["panda-soft"]["by_month"], set())
     assert not (a & b)
 
 

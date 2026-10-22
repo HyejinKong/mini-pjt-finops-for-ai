@@ -1,10 +1,10 @@
 [
   {
-    "tenant_id": "samsung-electronics",
-    "name": "삼성전자"
+    "tenant_id": "honeybee-electronics",
+    "name": "꿀벌전자"
   },
   {
-    "tenant_id": "samsung-sds",
-    "name": "삼성SDS"
+    "tenant_id": "panda-soft",
+    "name": "판다소프트"
   }
 ]
