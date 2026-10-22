@@ -3,7 +3,7 @@
 AUTH_MODE=static(기본): .env 의 회사별 고정 토큰과 비교한다.
 AUTH_MODE=jwt(선택): 서명된 더미 JWT 를 검증하고 sub 로 회사를 찾는다. exp 가 없거나 지나면 거절한다.
 
-실행: uvicorn src.api:app --reload  (브라우저 시연 페이지: http://127.0.0.1:8000/, 화면 코드는 src/ui.py)
+실행: uvicorn src.api:app --reload  (브라우저 시연 화면: http://127.0.0.1:8000/ 대시보드 + 질문 패널, 화면 코드는 src/ui.py)
 시연용 JWT 발급: python -m src.api issue hbe-lead-01
 """
 

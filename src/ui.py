@@ -1,64 +1,149 @@
 """시연용 화면. 페이지 HTML·JS 문자열과 페이지 라우터만 두고, 인증과 데이터는 src/api.py 가 맡는다.
 
-페이지: GET / (질문 시연), GET /dashboard (비용 대시보드)
+페이지: GET / (왼쪽 비용 대시보드 + 오른쪽 질문 패널). GET /dashboard 는 / 로 보낸다.
 """
 
 from fastapi import APIRouter
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 router = APIRouter()
 
-UI_HTML = r"""<!doctype html>
+APP_HTML = r"""<!doctype html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI 비용 분석</title>
 <style>
-  :root { --bg:#f7f7f5; --panel:#fff; --text:#1d1d1b; --muted:#6b6b66; --line:#deded8; --accent:#2f5fd0; --err:#b3261e; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#161615; --panel:#20201f; --text:#ececea; --muted:#a3a39d; --line:#363634; --accent:#8fb0ff; --err:#ff8a80; }
+  :root {
+    color-scheme: light;
+    --bg:#f7f7f5; --panel:#fcfcfb; --text:#1d1d1b; --muted:#52514e; --faint:#8a8984; --line:#e4e4df; --grid:#ececE8;
+    --accent:#2f5fd0; --err:#b3261e;
+    --series-1:#2a78d6; --series-2:#eb6834;
+    --heat-0:#cde2fb; --heat-1:#9ec5f4; --heat-2:#6da7ec; --heat-3:#3987e5; --heat-4:#256abf;
+    --heat-ink-light:#0b0b0b; --heat-ink-dark:#ffffff;
   }
-  * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.6 system-ui, "Malgun Gothic", sans-serif; }
-  main { max-width:760px; margin:0 auto; padding:24px 16px 48px; }
-  h1 { font-size:20px; margin:0 0 4px; }
-  p.sub { margin:0 0 20px; color:var(--muted); font-size:13px; }
-  label { display:block; font-size:13px; color:var(--muted); margin:14px 0 4px; }
-  input, textarea { width:100%; padding:10px; border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--text); font:inherit; }
-  textarea { min-height:70px; resize:vertical; }
-  .examples { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-  .examples button { border:1px solid var(--line); background:var(--panel); color:var(--text); border-radius:999px; padding:4px 10px; font-size:13px; cursor:pointer; }
-  .send { margin-top:12px; padding:10px 18px; border:0; border-radius:8px; background:var(--accent); color:#fff; font:inherit; cursor:pointer; }
-  .send:disabled { opacity:.5; cursor:wait; }
-  .out { margin-top:20px; padding:14px; border:1px solid var(--line); border-radius:8px; background:var(--panel); white-space:pre-wrap; word-break:break-word; }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg:#161615; --panel:#1a1a19; --text:#f0efec; --muted:#c3c2b7; --faint:#8f8e88; --line:#33332f; --grid:#2a2a27;
+      --accent:#8fb0ff; --err:#ff8a80;
+      --series-1:#3987e5; --series-2:#d95926;
+      --heat-0:#0d366b; --heat-1:#104281; --heat-2:#1c5cab; --heat-3:#2a78d6; --heat-4:#5598e7;
+      --heat-ink-light:#f0efec; --heat-ink-dark:#0b0b0b;
+    }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 system-ui, "Malgun Gothic", sans-serif; }
+  main { position:relative; max-width:1480px; margin:0 auto; padding:24px 16px 48px; }
+  .layout { display:grid; grid-template-columns:minmax(0, 1fr) 380px; gap:16px; align-items:start; }
+  aside.ask { position:sticky; top:16px; max-height:calc(100vh - 32px); display:flex; flex-direction:column; gap:10px;
+              padding:16px; border:1px solid var(--line); border-radius:10px; background:var(--panel); min-width:0; }
+  @media (max-width: 960px) {
+    .layout { grid-template-columns:minmax(0, 1fr); }
+    aside.ask { position:static; max-height:none; }
+    #history { max-height:none; }
+  }
+  .examples { display:flex; flex-wrap:wrap; gap:6px; }
+  .examples button { border:1px solid var(--line); background:var(--bg); color:var(--text); border-radius:999px; padding:3px 10px; font:inherit; font-size:12px; cursor:pointer; text-align:left; }
+  #history { flex:1 1 auto; overflow-y:auto; display:flex; flex-direction:column; gap:10px; min-height:80px; }
+  details.ex { margin:0; } details.ex .examples { margin-top:6px; }
+  .q { align-self:flex-end; max-width:90%; padding:8px 12px; border-radius:12px 12px 2px 12px; background:var(--bg); border:1px solid var(--line); font-size:14px; white-space:pre-wrap; word-break:break-word; }
+  .out { padding:10px 12px; border:1px solid var(--line); border-radius:10px; font-size:14px; white-space:pre-wrap; word-break:break-word; }
   .out.err { color:var(--err); }
+  .out.wait { color:var(--muted); }
   .out.md { white-space:normal; }
   .out.md > :first-child { margin-top:0; } .out.md > :last-child { margin-bottom:0; }
-  .out.md h3, .out.md h4, .out.md h5, .out.md h6 { margin:14px 0 6px; font-size:15px; }
-  .out.md p, .out.md ul, .out.md ol { margin:8px 0; } .out.md ul, .out.md ol { padding-left:22px; }
-  .out.md code { padding:1px 4px; border-radius:4px; background:var(--bg); font-size:13px; }
-  .out.md hr { border:0; border-top:1px solid var(--line); margin:12px 0; }
-  .tbl { overflow-x:auto; margin:8px 0; }
-  .tbl table { border-collapse:collapse; font-size:14px; }
-  .tbl th, .tbl td { border:1px solid var(--line); padding:5px 10px; text-align:left; white-space:nowrap; }
-  .tbl th { background:var(--bg); }
+  .out.md h3, .out.md h4, .out.md h5, .out.md h6 { margin:12px 0 6px; font-size:14px; color:var(--text); }
+  .out.md p, .out.md ul, .out.md ol { margin:6px 0; } .out.md ul, .out.md ol { padding-left:20px; }
+  .out.md code { padding:1px 4px; border-radius:4px; background:var(--bg); font-size:12px; }
+  .out.md hr { border:0; border-top:1px solid var(--line); margin:10px 0; }
+  .out.md .tbl { margin:6px 0; }
+  .out.md th, .out.md td { padding:4px 8px; border:1px solid var(--line); text-align:left; }
+  .turn details { margin-top:4px; }
+  .turn pre { margin:4px 0 0; padding:8px; max-height:280px; overflow:auto; background:var(--bg); border-radius:6px; font-size:11px; }
+  .composer { display:flex; flex-direction:column; gap:6px; }
+  .composer textarea { width:100%; min-height:64px; resize:vertical; padding:9px 10px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--text); font:inherit; }
+  .composer .row { display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:12px; color:var(--faint); }
+  header { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:8px; }
+  h1 { font-size:20px; margin:0; }
+  h2 { font-size:15px; margin:0 0 12px; }
+  h3 { font-size:13px; margin:14px 0 6px; color:var(--muted); font-weight:600; }
+  a { color:var(--accent); }
+  p.sub { margin:4px 0 16px; color:var(--muted); font-size:13px; }
+  .controls { display:flex; flex-wrap:wrap; gap:10px; align-items:end; margin-bottom:16px; }
+  .panel .controls { align-items:center; margin-bottom:8px; }
+  .controls label { display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--muted); }
+  .controls .grow { flex:1 1 260px; }
+  input, select { padding:9px 10px; border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--text); font:inherit; }
+  button.go { padding:9px 18px; border:0; border-radius:8px; background:var(--accent); color:#fff; font:inherit; cursor:pointer; }
+  button.go:disabled { opacity:.5; cursor:wait; }
+  .msg { padding:14px; border:1px solid var(--line); border-radius:8px; background:var(--panel); }
+  .msg.err { color:var(--err); }
+  .grid { display:grid; gap:16px; }
+  .kpis { grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); }
+  .bars { grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); }
+  .panel { padding:16px; border:1px solid var(--line); border-radius:10px; background:var(--panel); min-width:0; }
+  .kpi .label { font-size:13px; color:var(--muted); }
+  .kpi .value { font-size:26px; font-weight:650; margin:4px 0 2px; font-variant-numeric:tabular-nums; }
+  .kpi .note { font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .section { margin-top:16px; }
+  .barrow { display:grid; grid-template-columns:minmax(80px, 30%) 1fr auto; gap:8px; align-items:center; padding:3px 0; font-size:13px; }
+  .barrow .name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .barrow .num { color:var(--muted); font-variant-numeric:tabular-nums; text-align:right; }
+  .barrow svg { display:block; width:100%; height:14px; overflow:visible; }
+  .barrow.un .name { color:var(--muted); white-space:normal; }
+  .tag { display:inline-block; margin-left:4px; padding:0 5px; border:1px solid var(--line); border-radius:4px; font-size:11px; color:var(--muted); }
+  .tbl { overflow-x:auto; }
+  table { border-collapse:collapse; font-size:13px; font-variant-numeric:tabular-nums; }
+  th, td { padding:6px 10px; text-align:right; white-space:nowrap; border-bottom:1px solid var(--line); }
+  th:first-child, td:first-child { text-align:left; }
+  thead th { color:var(--muted); font-weight:600; }
+  tr.sum td, td.sum { font-weight:650; }
+  td.heat { border:2px solid var(--panel); border-radius:4px; }
+  .scale { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:10px; font-size:12px; color:var(--muted); }
+  .scale span.sw { width:22px; height:10px; border-radius:2px; display:inline-block; }
+  .mom { grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); }
+  ol.top { margin:0; padding-left:20px; font-size:13px; }
+  ol.top li { padding:3px 0; }
+  ol.top .d { font-weight:650; font-variant-numeric:tabular-nums; }
+  ol.top .s { color:var(--muted); font-variant-numeric:tabular-nums; }
+  .legend { display:flex; flex-wrap:wrap; gap:14px; font-size:13px; color:var(--muted); margin-bottom:6px; }
+  .legend i { display:inline-block; width:14px; height:2px; vertical-align:middle; margin-right:6px; }
+  #chart svg { display:block; width:100%; }
+  .axis { fill:var(--muted); font-size:11px; }
+  .tip { position:absolute; pointer-events:none; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--panel);
+         color:var(--text); font-size:12px; line-height:1.5; box-shadow:0 2px 8px rgba(0,0,0,.12); white-space:nowrap; display:none; z-index:2; }
+  .tip b { font-variant-numeric:tabular-nums; }
   details { margin-top:10px; }
   summary { cursor:pointer; color:var(--muted); font-size:13px; }
-  pre { margin:6px 0 0; padding:10px; overflow-x:auto; background:var(--bg); border-radius:6px; font-size:12px; }
+  .hint { font-size:12px; color:var(--faint); margin-top:6px; }
 </style>
 </head>
 <body>
 <main>
-  <h1>AI 비용 분석 Agent</h1>
-  <p class="sub">회사 토큰을 붙여 넣고 Bedrock 비용을 물어보세요. 토큰은 이 페이지에 저장되지 않습니다. <a href="/dashboard">대시보드 보기</a></p>
-  <label for="token">회사 토큰 (Bearer 뒤에 들어갈 값)</label>
-  <input id="token" type="password" autocomplete="off" placeholder="토큰 붙여넣기">
-  <label for="q">질문</label>
-  <textarea id="q">이번 달 팀별 비용 알려줘</textarea>
-  <div class="examples" id="examples"></div>
-  <button class="send" id="send">물어보기</button>
-  <div id="result"></div>
+  <header>
+    <h1>AI 비용 분석</h1>
+  </header>
+  <p class="sub">회사 토큰을 붙여 넣으면 그 회사의 Bedrock 비용만 보이고, 오른쪽에서 질문할 수 있습니다. 모든 숫자는 서버 도구가 계산한 값이고, 토큰은 이 페이지에 저장되지 않습니다.</p>
+  <div class="controls">
+    <label class="grow">회사 토큰 (Bearer 뒤에 들어갈 값)<input id="token" type="password" autocomplete="off" placeholder="토큰 붙여넣기"></label>
+    <label>기준 달<select id="month"><option value="2026-09">2026-09</option><option value="2026-08">2026-08</option></select></label>
+    <button class="go" id="load">불러오기</button>
+  </div>
+  <div class="layout">
+    <div id="view"><div class="msg">토큰을 붙여 넣고 불러오기를 누르세요.</div></div>
+    <aside class="ask" aria-label="질문하기">
+      <h2 style="margin:0">질문하기</h2>
+      <details class="ex" id="ex" open><summary>예시 질문</summary><div class="examples" id="examples"></div></details>
+      <div id="history" aria-live="polite"><p class="hint">질문을 입력하거나 예시를 눌러 보세요. 이 페이지에서 물은 질문과 답이 여기에 쌓입니다(새로고침하면 사라짐).</p></div>
+      <div class="composer">
+        <textarea id="q" placeholder="예: 이번 달 팀별 비용 알려줘"></textarea>
+        <div class="row"><span>Enter 보내기 · Shift+Enter 줄바꿈</span><button class="go" id="send">물어보기</button></div>
+      </div>
+    </aside>
+  </div>
+  <div class="tip" id="tip"></div>
 </main>
 <script>
   // md:start 마크다운 변환기. 먼저 전부 이스케이프하고, 정해 둔 태그만 다시 만든다(LLM 답변에 HTML 이 끼어들 수 없다)
@@ -121,161 +206,6 @@ UI_HTML = r"""<!doctype html>
     "claude-sonnet를 claude-haiku로 바꾸면 9월 비용이 얼마나 줄어?", "9월 비용 중 태그 없는 미귀속 비용은 얼마야?",
     "9월 팀별·모델별 비용 표로 보여줘", "고객지원팀 모델별로 지난달 대비 뭐가 늘었어?",
     "팀 × 모델 조합별로 지난달보다 가장 많이 늘어난 건?"];
-  const q = document.getElementById("q"), token = document.getElementById("token");
-  const send = document.getElementById("send"), result = document.getElementById("result");
-  for (const text of EXAMPLES) {
-    const b = document.createElement("button");
-    b.textContent = text;
-    b.onclick = () => { q.value = text; };
-    document.getElementById("examples").append(b);
-  }
-  function block(title, value) {
-    const d = document.createElement("details"), s = document.createElement("summary"), pre = document.createElement("pre");
-    s.textContent = title;
-    pre.textContent = JSON.stringify(value, null, 2);
-    d.append(s, pre);
-    return d;
-  }
-  function show(text, isError, markdown) {
-    result.replaceChildren();
-    const div = document.createElement("div");
-    div.className = "out" + (isError ? " err" : "") + (markdown ? " md" : "");
-    if (markdown) div.innerHTML = renderMarkdown(text);
-    else div.textContent = text;
-    result.append(div);
-    return div;
-  }
-  send.onclick = async () => {
-    send.disabled = true;
-    show("답변을 만드는 중입니다…");
-    try {
-      const headers = { "Content-Type": "application/json" };
-      if (token.value.trim()) headers["Authorization"] = "Bearer " + token.value.trim();
-      const r = await fetch("/query", { method: "POST", headers, body: JSON.stringify({ question: q.value }) });
-      const body = await r.json().catch(() => ({}));
-      if (r.status === 401) { show("401 인증 실패: 토큰이 없거나 올바르지 않습니다. 회사 토큰을 확인해 주세요.", true); return; }
-      if (!r.ok) { show(`요청 실패(${r.status}): ` + JSON.stringify(body.detail ?? body), true); return; }
-      const div = show(body.answer, false, true);
-      div.after(block(`contexts (${body.contexts.length})`, body.contexts.map(c => {
-        try { return { tool: c.tool, content: JSON.parse(c.content) }; } catch { return c; }
-      })), block("trace", body.trace));
-    } catch (e) {
-      show("서버에 연결하지 못했습니다: " + e, true);
-    } finally {
-      send.disabled = false;
-    }
-  };
-</script>
-</body>
-</html>
-"""
-
-
-@router.get("/", response_class=HTMLResponse, include_in_schema=False)
-def ui() -> str:
-    """시연용 페이지. 토큰은 사용자가 붙여 넣고, 서버는 토큰 목록을 내주지 않는다."""
-    return UI_HTML
-
-
-DASHBOARD_HTML = r"""<!doctype html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI 비용 대시보드</title>
-<style>
-  :root {
-    color-scheme: light;
-    --bg:#f7f7f5; --panel:#fcfcfb; --text:#1d1d1b; --muted:#52514e; --faint:#8a8984; --line:#e4e4df; --grid:#ececE8;
-    --accent:#2f5fd0; --err:#b3261e;
-    --series-1:#2a78d6; --series-2:#eb6834;
-    --heat-0:#cde2fb; --heat-1:#9ec5f4; --heat-2:#6da7ec; --heat-3:#3987e5; --heat-4:#256abf;
-    --heat-ink-light:#0b0b0b; --heat-ink-dark:#ffffff;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      color-scheme: dark;
-      --bg:#161615; --panel:#1a1a19; --text:#f0efec; --muted:#c3c2b7; --faint:#8f8e88; --line:#33332f; --grid:#2a2a27;
-      --accent:#8fb0ff; --err:#ff8a80;
-      --series-1:#3987e5; --series-2:#d95926;
-      --heat-0:#0d366b; --heat-1:#104281; --heat-2:#1c5cab; --heat-3:#2a78d6; --heat-4:#5598e7;
-      --heat-ink-light:#f0efec; --heat-ink-dark:#0b0b0b;
-    }
-  }
-  * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 system-ui, "Malgun Gothic", sans-serif; }
-  main { position:relative; max-width:1080px; margin:0 auto; padding:24px 16px 48px; }
-  header { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:8px; }
-  h1 { font-size:20px; margin:0; }
-  h2 { font-size:15px; margin:0 0 12px; }
-  h3 { font-size:13px; margin:14px 0 6px; color:var(--muted); font-weight:600; }
-  a { color:var(--accent); }
-  p.sub { margin:4px 0 16px; color:var(--muted); font-size:13px; }
-  .controls { display:flex; flex-wrap:wrap; gap:10px; align-items:end; margin-bottom:16px; }
-  .panel .controls { align-items:center; margin-bottom:8px; }
-  .controls label { display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--muted); }
-  .controls .grow { flex:1 1 260px; }
-  input, select { padding:9px 10px; border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--text); font:inherit; }
-  button.go { padding:9px 18px; border:0; border-radius:8px; background:var(--accent); color:#fff; font:inherit; cursor:pointer; }
-  button.go:disabled { opacity:.5; cursor:wait; }
-  .msg { padding:14px; border:1px solid var(--line); border-radius:8px; background:var(--panel); }
-  .msg.err { color:var(--err); }
-  .grid { display:grid; gap:16px; }
-  .kpis { grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); }
-  .bars { grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); }
-  .panel { padding:16px; border:1px solid var(--line); border-radius:10px; background:var(--panel); min-width:0; }
-  .kpi .label { font-size:13px; color:var(--muted); }
-  .kpi .value { font-size:26px; font-weight:650; margin:4px 0 2px; font-variant-numeric:tabular-nums; }
-  .kpi .note { font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums; }
-  .section { margin-top:16px; }
-  .barrow { display:grid; grid-template-columns:minmax(80px, 30%) 1fr auto; gap:8px; align-items:center; padding:3px 0; font-size:13px; }
-  .barrow .name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .barrow .num { color:var(--muted); font-variant-numeric:tabular-nums; text-align:right; }
-  .barrow svg { display:block; width:100%; height:14px; overflow:visible; }
-  .barrow.un .name { color:var(--muted); white-space:normal; }
-  .tag { display:inline-block; margin-left:4px; padding:0 5px; border:1px solid var(--line); border-radius:4px; font-size:11px; color:var(--muted); }
-  .tbl { overflow-x:auto; }
-  table { border-collapse:collapse; font-size:13px; font-variant-numeric:tabular-nums; }
-  th, td { padding:6px 10px; text-align:right; white-space:nowrap; border-bottom:1px solid var(--line); }
-  th:first-child, td:first-child { text-align:left; }
-  thead th { color:var(--muted); font-weight:600; }
-  tr.sum td, td.sum { font-weight:650; }
-  td.heat { border:2px solid var(--panel); border-radius:4px; }
-  .scale { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:10px; font-size:12px; color:var(--muted); }
-  .scale span.sw { width:22px; height:10px; border-radius:2px; display:inline-block; }
-  .mom { grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); }
-  ol.top { margin:0; padding-left:20px; font-size:13px; }
-  ol.top li { padding:3px 0; }
-  ol.top .d { font-weight:650; font-variant-numeric:tabular-nums; }
-  ol.top .s { color:var(--muted); font-variant-numeric:tabular-nums; }
-  .legend { display:flex; flex-wrap:wrap; gap:14px; font-size:13px; color:var(--muted); margin-bottom:6px; }
-  .legend i { display:inline-block; width:14px; height:2px; vertical-align:middle; margin-right:6px; }
-  #chart svg { display:block; width:100%; }
-  .axis { fill:var(--muted); font-size:11px; }
-  .tip { position:absolute; pointer-events:none; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--panel);
-         color:var(--text); font-size:12px; line-height:1.5; box-shadow:0 2px 8px rgba(0,0,0,.12); white-space:nowrap; display:none; z-index:2; }
-  .tip b { font-variant-numeric:tabular-nums; }
-  details { margin-top:10px; }
-  summary { cursor:pointer; color:var(--muted); font-size:13px; }
-  .hint { font-size:12px; color:var(--faint); margin-top:6px; }
-</style>
-</head>
-<body>
-<main>
-  <header>
-    <h1>AI 비용 대시보드</h1>
-    <a href="/">질문 페이지로</a>
-  </header>
-  <p class="sub">회사 토큰을 붙여 넣으면 그 회사의 Bedrock 비용만 보입니다. 모든 숫자는 서버 도구가 계산한 값이고, 토큰은 이 페이지에 저장되지 않습니다.</p>
-  <div class="controls">
-    <label class="grow">회사 토큰 (Bearer 뒤에 들어갈 값)<input id="token" type="password" autocomplete="off" placeholder="토큰 붙여넣기"></label>
-    <label>기준 달<select id="month"><option value="2026-09">2026-09</option><option value="2026-08">2026-08</option></select></label>
-    <button class="go" id="load">불러오기</button>
-  </div>
-  <div id="view"><div class="msg">토큰을 붙여 넣고 불러오기를 누르세요.</div></div>
-  <div class="tip" id="tip"></div>
-</main>
-<script>
   // dash:start 표시용 함수. 숫자는 서버가 준 문자열을 그대로 쓰고 자릿수 구분 기호만 넣는다(계산하지 않는다)
   function groupDigits(intPart) { return intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
   function usd(s) {
@@ -491,13 +421,75 @@ DASHBOARD_HTML = r"""<!doctype html>
   }
   $("load").onclick = () => load();
   $("month").onchange = () => { if ($("token").value.trim()) load(); };
+
+  // 질문 패널: 이 페이지에서 물은 질문과 답을 쌓는다. 서버에는 지금처럼 질문 하나만 보낸다
+  const q = $("q"), send = $("send"), history = $("history");
+  for (const text of EXAMPLES) {
+    const b = h("button", { type: "button" }, text);
+    b.onclick = () => { q.value = text; q.focus(); };
+    $("examples").append(b);
+  }
+  function block(title, value) {
+    const pre = h("pre");
+    pre.textContent = JSON.stringify(value, null, 2);
+    return h("details", {}, h("summary", {}, title), pre);
+  }
+  function setAnswer(div, text, kind) {
+    div.className = "out" + (kind ? " " + kind : "");
+    if (kind === "md") div.innerHTML = renderMarkdown(text);
+    else div.textContent = text;
+  }
+  async function ask(question) {
+    if (!question.trim() || send.disabled) return;
+    if (history.querySelector(".hint")) { history.replaceChildren(); $("ex").open = false; }
+    const answer = h("div"), turn = h("div", { class: "turn" }, answer);
+    history.append(h("div", { class: "q" }, question), turn);
+    setAnswer(answer, "답변을 만드는 중입니다…", "wait");
+    history.scrollTop = history.scrollHeight;
+    send.disabled = true;
+    try {
+      const headers = { "Content-Type": "application/json" }, token = $("token").value.trim();
+      if (token) headers["Authorization"] = "Bearer " + token;
+      const r = await fetch("/query", { method: "POST", headers, body: JSON.stringify({ question }) });
+      const body = await r.json().catch(() => ({}));
+      if (r.status === 401) return setAnswer(answer, "401 인증 실패: 토큰이 없거나 올바르지 않습니다. 회사 토큰을 확인해 주세요.", "err");
+      if (!r.ok) return setAnswer(answer, `요청 실패(${r.status}): ` + JSON.stringify(body.detail ?? body), "err");
+      setAnswer(answer, body.answer, "md");
+      turn.append(block(`contexts (${body.contexts.length})`, body.contexts.map(c => {
+        try { return { tool: c.tool, content: JSON.parse(c.content) }; } catch { return c; }
+      })), block("trace", body.trace));
+    } catch (e) {
+      setAnswer(answer, "서버에 연결하지 못했습니다: " + e, "err");
+    } finally {
+      send.disabled = false;
+      history.scrollTop = history.scrollHeight;
+    }
+  }
+  // 넓은 화면에서 패널 높이를 화면에 남은 높이로 맞춰 입력창이 늘 보이게 한다(좁은 화면은 CSS 가 아래로 쌓는다)
+  const aside = document.querySelector("aside.ask");
+  function fitAside() {
+    if (matchMedia("(max-width: 960px)").matches) { aside.style.maxHeight = ""; return; }
+    aside.style.maxHeight = Math.max(320, innerHeight - Math.max(16, aside.getBoundingClientRect().top) - 16) + "px";
+  }
+  addEventListener("scroll", fitAside, { passive: true });
+  addEventListener("resize", fitAside);
+  fitAside();
+  send.onclick = () => { const text = q.value; q.value = ""; ask(text); };
+  q.onkeydown = e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); send.onclick(); } };
 </script>
 </body>
 </html>
 """
 
 
-@router.get("/dashboard", response_class=HTMLResponse, include_in_schema=False)
-def dashboard() -> str:
-    """비용 대시보드 페이지. 숫자는 GET /dashboard/data 가 주고 페이지는 계산하지 않는다. 서버는 토큰 목록을 내주지 않는다."""
-    return DASHBOARD_HTML
+@router.get("/", response_class=HTMLResponse, include_in_schema=False)
+def app_page() -> str:
+    """대시보드와 질문 패널을 합친 페이지. 숫자는 GET /dashboard/data 와 POST /query 가 주고 페이지는 계산하지 않는다.
+    토큰은 사용자가 붙여 넣고, 서버는 토큰 목록을 내주지 않는다."""
+    return APP_HTML
+
+
+@router.get("/dashboard", include_in_schema=False)
+def dashboard() -> RedirectResponse:
+    """옛 대시보드 주소. 합친 페이지(/)로 보낸다."""
+    return RedirectResponse("/")

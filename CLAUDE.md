@@ -23,7 +23,7 @@ src/tools.py                 비용 집계·전월 대비·what-if 도구
 src/retriever.py             공용 참고 문서 RAG (search_reference 도구)
 src/api.py                   POST /query, 고정 토큰 검증(기본)·JWT 선택 모드
 src/policy.py                LLM 앞 정책 판정과 거절 문구 상수
-src/ui.py                    시연 화면(GET / 질문 페이지) HTML·JS 와 페이지 라우터. 인증·데이터는 다루지 않는다
+src/ui.py                    시연 화면(GET / 대시보드 + 질문 패널) HTML·JS 와 페이지 라우터. 인증·데이터는 다루지 않는다
 data/                        더미 사용 로그, prices.csv, 사용자 매핑, 참고 문서
 evaluation/                  test_queries.csv, run_eval.py, check_docs.py (채점 리포트 json 은 커밋하지 않는다)
 tests/                       자격 증명 없이 도는 단위 테스트 (LLM 은 스텁)
@@ -50,7 +50,7 @@ tests/                       자격 증명 없이 도는 단위 테스트 (LLM �
 
 ## 자주 쓰는 명령
 - 서버 실행: `uvicorn src.api:app --reload`
-- 대시보드: 서버를 띄운 뒤 `http://127.0.0.1:8000/dashboard` 에 회사 토큰을 붙여 넣는다(질문 페이지는 `/`)
+- 시연 화면: 서버를 띄운 뒤 `http://127.0.0.1:8000/` 에 회사 토큰을 붙여 넣는다(왼쪽 대시보드, 오른쪽 질문 패널. 옛 `/dashboard` 는 `/` 로 보낸다)
 - 시연용 JWT 발급(JWT 선택 모드): `python -m src.api issue hbe-lead-01` (1시간 뒤 만료)
 - 단위 테스트: `python -m pytest -q` (한 파일만: `python -m pytest tests/test_cost_tools.py -q`)
 - 채점: `python evaluation/run_eval.py --llm stub`
