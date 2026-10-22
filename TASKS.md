@@ -65,7 +65,11 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
   - 확인: `python evaluation/check_docs.py` 종료 코드 0
 - [x] 4-3 (40분) `python evaluation/run_eval.py --llm bedrock` 실행(리포트 json 은 로컬에만, 커밋 안 함), SERVICE.md 5장 "미측정" 을 실제 통과율로 바꾼다
   - 확인: `git status` 에 eval_report_live.json 이 안 보이고, SERVICE.md 5장에 카테고리별·전체 통과율이 적혀 있다
-- 커밋: 작업마다 하나(4-1 docs, 4-2 feat(eval), 4-3 docs)
+- [x] 4-4 (40분) `src/tools.py` `get_mom_change` 의 항목에 `this_krw`·`last_krw`, 미귀속 줄에 `this_krw`·`last_krw`·`delta_krw` 를 더한다. `src/agent.py` 프롬프트에 "증감 질문은 증감액을 함께 쓰고, 원화는 도구가 준 값만 쓴다(없으면 USD 만)"를 넣고, stub 답변의 미귀속 줄에도 원화를 붙인다
+  - 확인: `python -m pytest -q` 통과(원화 필드 테스트 추가), stub 12/12 유지, `--llm bedrock` 재실행에서 q10 답변에 감소액 $5.06 이 있고 원화가 모두 contexts 값이다. SERVICE.md 5장을 재실행 결과로 고친다
+  - 참고: 4-3 bedrock 실행에서 q10 이 감소액을 빠뜨렸고, 도구가 주지 않은 원화를 직접 계산해 틀렸다("지난달 $36.35 (약 50,904원)", 정답 50,890원)
+  - 추가(같은 작업): 재실행에서 q03 이 `get_cost_breakdown` 의 total(미귀속 포함 $791.43)을 "소계"로 쓰고 미귀속을 또 더해 "전체 합계 $908.24"를 지어냈다. 도구에 미귀속 제외 합계 `tagged_total` 을 더하고, docstring·프롬프트에 "total 은 미귀속 포함, 다시 더하지 않는다"를 적는다. 확인은 위와 같고 q03 답변의 숫자도 모두 contexts 값이어야 한다
+- 커밋: 작업마다 하나(4-1 docs, 4-2 feat(eval), 4-3 docs, 4-4 fix(tools))
 
 ## 묶음 5. 시간이 남으면
 - [ ] 5-1 (30분) JWT 모드 점검: `AUTH_MODE=jwt` 로 전체 테스트와 `run_eval.py --auth jwt --llm stub` 을 돌린다

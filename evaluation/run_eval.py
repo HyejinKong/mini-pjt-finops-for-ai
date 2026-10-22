@@ -106,7 +106,7 @@ def compose_answer(result: dict) -> str:
             pct = i["pct_or_new"] if i["pct_or_new"] == "신규" else f"{i['pct_or_new']}%"
             lines.append(f"- {i['key']}: {money(i['delta_usd'].lstrip('-'), abs(i['delta_krw']))} {word} ({pct})")
         u = result["unattributed"]
-        lines.append(f"- {u['key']}(순위 제외): 이번 달 {money(u['this_usd'])}, 지난달 {money(u['last_usd'])}")
+        lines.append(f"- {u['key']}(순위 제외): 이번 달 {money(u['this_usd'], u['this_krw'])}, 지난달 {money(u['last_usd'], u['last_krw'])}")
     else:
         lines.append(json.dumps(result, ensure_ascii=False))
     return "\n".join(lines)

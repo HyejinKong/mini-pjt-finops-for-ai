@@ -122,6 +122,7 @@ def build_tools(repo: TenantRepo) -> list:
         드릴다운하려면 team 이나 service 로 범위를 좁힌다. month 는 'YYYY-MM' 형식이다.
         금액은 USD(소수 둘째 자리)와 원화 환산값(krw)으로 돌려준다.
         태그가 없는 비용은 '미귀속'(unattributed)으로 따로 돌려준다.
+        total 은 미귀속을 포함한 전체 합계이고, 미귀속을 뺀 합계는 tagged_total 이다.
         '이번 달 팀별 비용', '고객지원팀 서비스별 비용', '9월 모델별 비용' 같은 질문에 쓴다."""
         if team is not None and team not in repo.names("team"):
             return {"error": f"'{team}' 팀은 이 회사 데이터에 없습니다.", "teams": sorted(repo.names("team"))}
@@ -138,6 +139,7 @@ def build_tools(repo: TenantRepo) -> list:
         }
         if team is None and service is None:
             result["unattributed"] = {"key": UNATTRIBUTED, **repo.money(unattributed)}
+            result["tagged_total"] = repo.money(sum(groups.values()))
         return result
 
     @tool
@@ -162,6 +164,7 @@ def build_tools(repo: TenantRepo) -> list:
             if (direction == "increase" and d > 0) or (direction == "decrease" and d < 0):
                 items.append((d, k))
         items.sort(key=lambda x: x[0], reverse=(direction == "increase"))
+        rate = repo.settings["krw_rate"]
         return {
             "this_month": this_month,
             "last_month": last_month,
@@ -171,9 +174,11 @@ def build_tools(repo: TenantRepo) -> list:
                 {
                     "key": k,
                     "this_usd": to_usd(this.get(k, 0)),
+                    "this_krw": to_krw(this.get(k, 0), rate),
                     "last_usd": to_usd(last.get(k, 0)),
+                    "last_krw": to_krw(last.get(k, 0), rate),
                     "delta_usd": to_usd(d),
-                    "delta_krw": to_krw(d, repo.settings["krw_rate"]),
+                    "delta_krw": to_krw(d, rate),
                     "pct_or_new": change_pct(d, last.get(k, 0)),
                 }
                 for d, k in items[:top_n]
@@ -181,8 +186,11 @@ def build_tools(repo: TenantRepo) -> list:
             "unattributed": {
                 "key": UNATTRIBUTED,
                 "this_usd": to_usd(this_un),
+                "this_krw": to_krw(this_un, rate),
                 "last_usd": to_usd(last_un),
+                "last_krw": to_krw(last_un, rate),
                 "delta_usd": to_usd(this_un - last_un),
+                "delta_krw": to_krw(this_un - last_un, rate),
             },
         }
 

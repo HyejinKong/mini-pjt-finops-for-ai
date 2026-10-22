@@ -54,6 +54,21 @@ def test_krw_uses_fixed_rate():
         assert r["krw"] == round(float(r["usd"]) * 1400)
 
 
+@pytest.mark.parametrize("direction", ["increase", "decrease"])
+def test_mom_krw_matches_usd(direction):
+    out = tools_for("honeybee-electronics")["get_mom_change"].invoke({"dimension": "service", "direction": direction})
+    for i in out["items"] + [out["unattributed"]]:
+        for p in ("this", "last", "delta"):
+            assert i[f"{p}_krw"] == round(float(i[f"{p}_usd"]) * 1400)
+
+
+def test_total_includes_unattributed_once():
+    out = tools_for("panda-soft")["get_cost_breakdown"].invoke({"group_by": "model"})
+    cents = lambda m: round(float(m["usd"]) * 100)
+    assert cents(out["tagged_total"]) == sum(cents(r) for r in out["rows"])
+    assert abs(cents(out["total"]) - cents(out["tagged_total"]) - cents(out["unattributed"])) <= 1
+
+
 def test_unknown_team_returns_error_not_amounts():
     out = tools_for("honeybee-electronics")["get_cost_breakdown"].invoke({"group_by": "service", "team": "물류팀"})
     assert "error" in out and "rows" not in out
