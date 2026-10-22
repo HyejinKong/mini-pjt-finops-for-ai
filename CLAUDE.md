@@ -25,7 +25,7 @@ src/api.py                   POST /query, 고정 토큰 검증(기본)·JWT 선�
 src/policy.py                LLM 앞 정책 판정과 거절 문구 상수
 src/ui.py                    시연 화면(GET / 대시보드 + 질문 패널) HTML·JS 와 페이지 라우터. 인증·데이터는 다루지 않는다
 data/                        더미 사용 로그, prices.csv, 사용자 매핑, 참고 문서
-evaluation/                  test_queries.csv, run_eval.py, check_docs.py (채점 리포트 json 은 커밋하지 않는다)
+evaluation/                  test_queries.csv, run_eval.py, check_docs.py, round1_report.md (채점 리포트 json 은 커밋하지 않는다)
 tests/                       자격 증명 없이 도는 단위 테스트 (LLM 은 스텁)
 
 ## 주고받는 형식 (제출 규약)
