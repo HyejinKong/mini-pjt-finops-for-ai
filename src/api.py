@@ -167,7 +167,10 @@ def dashboard_data(
         }
         for direction in ("increase", "decrease")
     }
+    tenant = next(t for t in json.loads((DATA / "tenants.json").read_text(encoding="utf-8"))
+                  if t["tenant_id"] == principal.tenant_id)
     return {
+        "tenant": {"tenant_id": tenant["tenant_id"], "name": tenant["name"]},
         "kpi": {"month": month, "previous_month": last, "total": overall["total"],
                 "unattributed": by_dimension["team"]["unattributed"]},
         "breakdown": by_dimension,

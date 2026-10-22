@@ -111,6 +111,11 @@ def test_kpi_matches_expected(client, tenant, token):
     assert "share_pct" in kpi["unattributed"]
 
 
+@pytest.mark.parametrize("token,tenant,name", [(HBE_TOKEN, "honeybee-electronics", "꿀벌전자"), (PDS_TOKEN, "panda-soft", "판다소프트")])
+def test_tenant_is_the_token_company(client, token, tenant, name):
+    assert client.get("/dashboard/data", headers=bearer(token)).json()["tenant"] == {"tenant_id": tenant, "name": name}
+
+
 def test_august_compares_with_july(client):
     body = client.get("/dashboard/data", params={"month": "2026-08"}, headers=bearer(HBE_TOKEN)).json()
     assert body["kpi"]["previous_month"] == "2026-07"
@@ -145,6 +150,15 @@ def test_page_has_no_secrets_and_no_html_injection(client):
     assert 'fetch("/dashboard/data?' in r.text and 'fetch("/query"' in r.text
     # 응답 값은 textContent 로만 넣고, innerHTML 은 이스케이프한 뒤 변환한 마크다운 결과 한 곳에만 쓴다
     assert r.text.count("innerHTML") == 1 and "div.innerHTML = renderMarkdown(text)" in r.text
+
+
+def test_only_external_resource_is_the_font_stylesheet(client):
+    # 외부 CDN 금지의 유일한 예외는 Noto Sans KR 글꼴(TASKS 8-1a 결정). 스크립트는 외부에서 불러오지 않는다
+    import re
+    text = client.get("/").text
+    hosts = {m.split("/")[2] for m in re.findall(r"https?://[^\s\"'<>)]+", text) if "w3.org/2000/svg" not in m}
+    assert hosts <= {"fonts.googleapis.com", "fonts.gstatic.com"}
+    assert not re.search(r"<script[^>]+src=", text)
 
 
 def test_old_dashboard_address_redirects(client):
