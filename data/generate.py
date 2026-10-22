@@ -269,6 +269,22 @@ def multi_dimension_expected(rows, cents):
     return {"cross": cross, "unattributed_by_model": un_model, "mom_cross": mom_cross, "mom_scoped": mom_scoped}
 
 
+def daily_expected(rows, cents):
+    """대시보드 일별 추이(묶음 7)의 정답값: 월별로 날짜마다 전체 합계와 미귀속 합계."""
+    out = {}
+    for m in (THIS_MONTH, LAST_MONTH):
+        tot, un = {}, {}
+        for r in rows:
+            if not r["date"].startswith(m):
+                continue
+            c = row_cost_e8(r, cents)
+            tot[r["date"]] = tot.get(r["date"], 0) + c
+            un[r["date"]] = un.get(r["date"], 0) + (0 if r["team"] else c)
+        out[m] = {"total": {d: usd(v) for d, v in sorted(tot.items())},
+                  "unattributed": {d: usd(v) for d, v in sorted(un.items())}}
+    return out
+
+
 def whatif(rows, cents, x, y, month=THIS_MONTH):
     """모델 X 의 토큰을 Y 단가로 다시 계산한 결과."""
     sel = [r for r in rows if r["date"].startswith(month) and r["model_id"] == x]
@@ -311,11 +327,12 @@ def expected_for(tenant, rows, cents):
         "whatif": [whatif(rows, cents, swap_x, "claude-haiku"), whatif(rows, cents, "claude-haiku", "claude-sonnet")],
         "patterns": {k: pat[k] for k in ("spike", "decline", "new", "new_model")},
         "multi": multi_dimension_expected(rows, cents),
+        "daily": daily_expected(rows, cents),
     }
 
 
 def all_amounts(exp):
-    """회사 하나의 정답값에 나오는 0 이 아닌 모든 금액."""
+    """회사 하나의 정답값에 나오는 0 이 아닌 모든 금액. 대시보드 전용 daily 는 에이전트·채점에 나오지 않아 뺀다."""
     found = set()
 
     def walk(v):
