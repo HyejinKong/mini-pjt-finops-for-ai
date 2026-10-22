@@ -166,3 +166,10 @@ def test_unknown_auth_mode_fails(static_client, monkeypatch):
     monkeypatch.setenv("AUTH_MODE", "none")
     with pytest.raises(RuntimeError):
         static_client.post("/query", json={"question": "이번 달 팀별 비용"}, headers=bearer(HBE_TOKEN))
+
+
+def test_ui_page_has_no_secrets(static_client):
+    r = static_client.get("/")
+    assert r.status_code == 200 and "text/html" in r.headers["content-type"]
+    assert HBE_TOKEN not in r.text and PDS_TOKEN not in r.text and SECRET not in r.text
+    assert 'fetch("/query"' in r.text
