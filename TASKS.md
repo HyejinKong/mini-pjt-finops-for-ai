@@ -63,7 +63,7 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
   - 확인: `git grep -n "JWT" CLAUDE.md` 의 모든 줄이 "선택 모드" 문맥이고, seed 에 회사명이 없다
 - [x] 4-2 (45분) `evaluation/check_docs.py`: SERVICE.md·CLAUDE.md 의 필수 섹션, 폴더 구조, 거절 문구 상수 일치를 검사한다
   - 확인: `python evaluation/check_docs.py` 종료 코드 0
-- [ ] 4-3 (40분) `python evaluation/run_eval.py --llm bedrock` 실행(리포트 json 은 로컬에만, 커밋 안 함), SERVICE.md 5장 "미측정" 을 실제 통과율로 바꾼다
+- [x] 4-3 (40분) `python evaluation/run_eval.py --llm bedrock` 실행(리포트 json 은 로컬에만, 커밋 안 함), SERVICE.md 5장 "미측정" 을 실제 통과율로 바꾼다
   - 확인: `git status` 에 eval_report_live.json 이 안 보이고, SERVICE.md 5장에 카테고리별·전체 통과율이 적혀 있다
 - 커밋: 작업마다 하나(4-1 docs, 4-2 feat(eval), 4-3 docs)
 
