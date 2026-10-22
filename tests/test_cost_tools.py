@@ -253,3 +253,66 @@ def test_daily_trend_is_not_an_agent_tool():
 def test_daily_trend_unknown_month():
     out = build_dashboard_tools(TenantRepo("panda-soft"))[0].invoke({"month": "2025-01"})
     assert "error" in out and "days" not in out and "2026-09" in out["months"]
+
+
+# ---------- 모델 범위 전월 대비와 모르는 인자 (묶음 8-2a) ----------
+
+def independent_mom_by_team_for_model(tenant, model, direction):
+    """tools.py 를 쓰지 않고 사용 로그와 단가표로 model 범위의 팀별 전월 대비 상위 3개를 계산한다."""
+    import csv
+    prices = {r["model_id"]: (Decimal(r["input_usd_per_1m"]), Decimal(r["output_usd_per_1m"]))
+              for r in csv.DictReader((ROOT / "data" / "prices.csv").open(encoding="utf-8"))}
+    sums = {"2026-09": {}, "2026-08": {}}
+    for r in csv.DictReader((ROOT / "data" / "usage" / f"{tenant}.csv").open(encoding="utf-8")):
+        month = r["date"][:7]
+        if month in sums and r["team"] and r["model_id"] == model:
+            pin, pout = prices[model]
+            cost = (int(r["input_tokens"]) * pin + int(r["output_tokens"]) * pout) / 1_000_000
+            sums[month][r["team"]] = sums[month].get(r["team"], 0) + cost
+    q = lambda v: str(Decimal(v).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+    rows = []
+    for team in set(sums["2026-09"]) | set(sums["2026-08"]):
+        d = sums["2026-09"].get(team, 0) - sums["2026-08"].get(team, 0)
+        if (direction == "increase" and d > 0) or (direction == "decrease" and d < 0):
+            rows.append((d, team))
+    rows.sort(key=lambda x: (-x[0] if direction == "increase" else x[0], x[1]))
+    return [{"team": t, "this_usd": q(sums["2026-09"].get(t, 0)), "last_usd": q(sums["2026-08"].get(t, 0)), "delta_usd": q(d)}
+            for d, t in rows[:3]]
+
+
+@pytest.mark.parametrize("tenant", TENANTS)
+@pytest.mark.parametrize("direction", ["increase", "decrease"])
+def test_mom_scoped_to_model_matches_independent_calc(tenant, direction):
+    tool = tools_for(tenant)["get_mom_change"]
+    for model in sorted({r["model_id"] for r in TenantRepo(tenant).rows}):
+        out = tool.invoke({"dimension": ["team"], "direction": direction, "model": model})
+        got = [{k: i[k] for k in ("team", "this_usd", "last_usd", "delta_usd")} for i in out["items"]]
+        assert got == independent_mom_by_team_for_model(tenant, model, direction), model
+        assert out["scope"]["model"] == model and "unattributed" not in out
+
+
+def test_mom_model_scope_errors():
+    tool = tools_for("panda-soft")["get_mom_change"]
+    assert "error" in tool.invoke({"dimension": ["team"], "model": "gpt-5"})
+    out = tool.invoke({"dimension": ["model"], "model": "claude-sonnet"})
+    assert "error" in out and "items" not in out
+    out = tool.invoke({"dimension": ["team"], "team": "마케팅팀"})
+    assert "error" in out and out["allowed"] == ["service", "model"]
+
+
+@pytest.mark.parametrize("name,args", [
+    ("get_cost_breakdown", {"group_by": ["team"], "model": "claude-sonnet"}),
+    ("get_mom_change", {"dimension": ["team"], "modle": "claude-sonnet"}),
+    ("simulate_model_swap", {"from_model": "claude-sonnet", "to_model": "claude-haiku", "quarter": "Q3"}),
+])
+def test_unknown_argument_is_an_error_not_ignored(name, args):
+    out = json.loads(tools_for("honeybee-electronics")[name].invoke(args))
+    assert "지원하지 않는 인자" in out["error"] and "allowed_args" in out
+    assert not any(k in out for k in ("rows", "items", "before"))
+    bad = next(k for k in args if k not in out["allowed_args"])
+    assert bad in out["error"]
+
+
+def test_daily_trend_rejects_unknown_argument():
+    out = json.loads(build_dashboard_tools(TenantRepo("panda-soft"))[0].invoke({"month": "2026-09", "team": "마케팅팀"}))
+    assert "error" in out and out["allowed_args"] == ["month"]

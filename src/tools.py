@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Literal
 
 from langchain_core.tools import tool
+from pydantic import ConfigDict, ValidationError
 
 DATA = Path(__file__).resolve().parent.parent / "data"
 UNATTRIBUTED = "미귀속"
@@ -82,20 +83,22 @@ class TenantRepo:
         return {"usd": to_usd(e8), "krw": to_krw(e8, self.settings["krw_rate"])}
 
     def sum_by(self, month: str, key: str | tuple[str, ...], team: str | None = None,
-               service: str | None = None) -> tuple[dict, int]:
+               service: str | None = None, model: str | None = None) -> tuple[dict, int]:
         """month 비용을 key 별로 합산한다. key 가 튜플이면 그 컬럼 값들의 조합별로 합산한다.
-        태그된 행 합계(dict)와 미귀속 합계를 돌려준다."""
+        태그된 행 합계(dict)와 미귀속 합계를 돌려준다. 범위(team·service·model)를 좁히면 미귀속은 0 이다."""
         groups, unattributed = {}, 0
         for r in self.rows:
             if not r["date"].startswith(month):
                 continue
             if not r["team"]:
-                if team is None and service is None:
+                if team is None and service is None and model is None:
                     unattributed += self.cost_e8(r)
                 continue
             if team is not None and r["team"] != team:
                 continue
             if service is not None and r["service"] != service:
+                continue
+            if model is not None and r["model_id"] != model:
                 continue
             group = tuple(r[k] for k in key) if isinstance(key, tuple) else r[key]
             groups[group] = groups.get(group, 0) + self.cost_e8(r)
@@ -124,6 +127,25 @@ class TenantRepo:
 
 
 GROUP_KEYS = {"team": "team", "service": "service", "feature": "feature", "model": "model_id"}
+
+
+def strict(t):
+    """도구가 모르는 인자를 조용히 버리지 않게 한다. 모르는 인자나 틀린 형식이면 숫자 없이 오류와 쓸 수 있는 인자 목록을 돌려준다."""
+    fields = list(t.args_schema.model_fields)
+
+    class Strict(t.args_schema):
+        model_config = ConfigDict(**t.args_schema.model_config, extra="forbid")
+
+    Strict.__name__ = t.args_schema.__name__
+    t.args_schema = Strict
+
+    def on_error(e: ValidationError) -> str:
+        bad = [".".join(map(str, err["loc"])) for err in e.errors()]
+        return json.dumps({"error": f"지원하지 않는 인자이거나 형식이 틀렸습니다: {', '.join(bad)}", "allowed_args": fields},
+                          ensure_ascii=False)
+
+    t.handle_validation_error = on_error
+    return t
 
 
 def build_tools(repo: TenantRepo) -> list:
@@ -187,12 +209,14 @@ def build_tools(repo: TenantRepo) -> list:
         last_month: str = "2026-08",
         team: str | None = None,
         service: str | None = None,
+        model: str | None = None,
         top_n: int = 3,
     ) -> dict:
         """지난달 대비 이번 달 비용이 가장 많이 늘어난(direction='increase') 또는 줄어든(direction='decrease') 상위 항목을 돌려준다.
         dimension 은 기준 1~2개 목록이다. ["model"] 이면 모델별, ["team", "model"] 이면 팀 × 모델 조합별 순위다.
         items 의 각 항목은 기준 이름(team, service, model)을 필드로 갖는다.
-        team 이나 service 로 범위를 좁힐 수 있다(예: 고객지원팀의 모델별 전월 대비).
+        team, service, model 로 범위를 좁힐 수 있다(예: 고객지원팀의 모델별 전월 대비, model='claude-sonnet' 의 팀별 전월 대비).
+        범위로 쓴 기준은 dimension 에 함께 쓸 수 없다.
         순위는 USD 증감액 기준이며 증감률(pct_or_new)은 소수 한 자리다. 지난달 비용이 0인 항목은 '신규'로 표시한다.
         미귀속 비용은 순위에서 빼고 unattributed 로 따로 돌려준다. 범위를 좁히면 미귀속은 빠진다.
         total 은 범위 전체(범위를 좁히지 않으면 미귀속 포함)의 지난달·이번 달 합계와 증감이다. 직접 더하지 말고 이 값을 쓴다.
@@ -205,9 +229,15 @@ def build_tools(repo: TenantRepo) -> list:
             return {"error": f"'{team}' 팀은 이 회사 데이터에 없습니다.", "teams": sorted(repo.names("team"))}
         if service is not None and service not in repo.names("service"):
             return {"error": f"'{service}' 서비스는 이 회사 데이터에 없습니다.", "services": sorted(repo.names("service"))}
+        if model is not None and model not in repo.names("model_id"):
+            return {"error": f"'{model}' 모델은 이 회사 데이터에 없습니다.", "models": sorted(repo.names("model_id"))}
+        scoped = [d for d, v in (("team", team), ("service", service), ("model", model)) if v is not None and d in dims]
+        if scoped:
+            return {"error": f"범위로 정한 기준({', '.join(scoped)})은 dimension 에 함께 쓸 수 없습니다.",
+                    "allowed": [d for d in ("team", "service", "model") if d not in scoped]}
         key = tuple(GROUP_KEYS[d] for d in dims)
-        this, this_un = repo.sum_by(this_month, key, team, service)
-        last, last_un = repo.sum_by(last_month, key, team, service)
+        this, this_un = repo.sum_by(this_month, key, team, service, model)
+        last, last_un = repo.sum_by(last_month, key, team, service, model)
         items = []
         for k in set(this) | set(last):
             d = this.get(k, 0) - last.get(k, 0)
@@ -219,7 +249,7 @@ def build_tools(repo: TenantRepo) -> list:
             "this_month": this_month,
             "last_month": last_month,
             "dimension": dims,
-            "scope": {"team": team, "service": service},
+            "scope": {"team": team, "service": service, "model": model},
             "direction": direction,
             "items": [
                 {
@@ -245,7 +275,7 @@ def build_tools(repo: TenantRepo) -> list:
             "delta_krw": to_krw(this_total - last_total, rate),
             "pct_or_new": change_pct(this_total - last_total, last_total),
         }
-        if team is None and service is None:
+        if team is None and service is None and model is None:
             result["unattributed"] = {
                 "key": UNATTRIBUTED,
                 "this_usd": to_usd(this_un),
@@ -303,7 +333,7 @@ def build_tools(repo: TenantRepo) -> list:
             "change": {"kind": kind, **repo.money(abs(before - after))},
         }
 
-    return [get_cost_breakdown, get_mom_change, simulate_model_swap]
+    return [strict(t) for t in (get_cost_breakdown, get_mom_change, simulate_model_swap)]
 
 
 def build_dashboard_tools(repo: TenantRepo) -> list:
@@ -333,4 +363,4 @@ def build_dashboard_tools(repo: TenantRepo) -> list:
             "total": repo.money(sum(days.values())),
         }
 
-    return [get_daily_trend]
+    return [strict(get_daily_trend)]
