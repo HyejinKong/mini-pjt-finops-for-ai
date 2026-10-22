@@ -2,11 +2,12 @@
 
 import inspect
 import json
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 import pytest
 
-from src.tools import TenantRepo, build_tools
+from src.tools import TenantRepo, build_dashboard_tools, build_tools
 
 ROOT = Path(__file__).resolve().parent.parent
 EXP = json.loads((ROOT / "evaluation" / "expected_values.json").read_text(encoding="utf-8"))
@@ -172,7 +173,8 @@ def test_whatif_edge_cases():
 
 
 def test_tools_take_no_tenant_argument():
-    for t in build_tools(TenantRepo("honeybee-electronics")):
+    repo = TenantRepo("honeybee-electronics")
+    for t in build_tools(repo) + build_dashboard_tools(repo):
         params = set(t.args) | set(inspect.signature(t.func).parameters)
         assert not any("tenant" in p for p in params), t.name
 
@@ -193,3 +195,61 @@ def test_unknown_tenant_rejected():
     for bad in ("../panda-soft", "../usage/panda-soft", "acme"):
         with pytest.raises(ValueError):
             TenantRepo(bad)
+
+
+# ---------- 대시보드 KPI 필드와 일별 추이 (묶음 7) ----------
+
+def pct1(part, whole):
+    """정답 금액 문자열 두 개로 비율(%)을 소수 한 자리로 계산한다."""
+    return str((Decimal(part) * 100 / Decimal(whole)).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))
+
+
+@pytest.mark.parametrize("tenant", TENANTS)
+@pytest.mark.parametrize("month", ["2026-09", "2026-08"])
+def test_unattributed_share_pct(tenant, month):
+    out = tools_for(tenant)["get_cost_breakdown"].invoke({"group_by": ["team"], "month": month})
+    exp = EXP[tenant]["by_month"][month]
+    assert out["unattributed"]["share_pct"] == pct1(exp["unattributed"], exp["total"])
+    assert "unattributed" not in tools_for(tenant)["get_cost_breakdown"].invoke({"group_by": ["service"], "team": "고객지원팀"})
+
+
+@pytest.mark.parametrize("tenant", TENANTS)
+def test_mom_total_line(tenant):
+    out = tools_for(tenant)["get_mom_change"].invoke({"dimension": ["team"]})
+    this, last = EXP[tenant]["by_month"]["2026-09"]["total"], EXP[tenant]["by_month"]["2026-08"]["total"]
+    t = out["total"]
+    assert (t["this_usd"], t["last_usd"]) == (this, last)
+    assert abs(Decimal(t["delta_usd"]) - (Decimal(this) - Decimal(last))) <= Decimal("0.01")
+    # 도구는 반올림 전 금액으로 계산하므로, 반올림된 정답으로 다시 계산한 값과 0.1%p 까지 다를 수 있다
+    assert abs(Decimal(t["pct_or_new"]) - Decimal(pct1(t["delta_usd"], last))) <= Decimal("0.1")
+    for p in ("this", "last", "delta"):
+        assert t[f"{p}_krw"] == round(float(t[f"{p}_usd"]) * 1400)
+
+
+def test_mom_total_line_in_scope_excludes_unattributed():
+    out = tools_for("panda-soft")["get_mom_change"].invoke({"dimension": ["service"], "team": "고객지원팀"})
+    services_this = EXP["panda-soft"]["drilldown_service_by_team"]["고객지원팀"]
+    assert abs(Decimal(out["total"]["this_usd"]) - sum(Decimal(v) for v in services_this.values())) <= Decimal("0.01")
+    assert "unattributed" not in out
+
+
+@pytest.mark.parametrize("tenant", TENANTS)
+@pytest.mark.parametrize("month", ["2026-09", "2026-08"])
+def test_daily_trend_matches_expected(tenant, month):
+    out = build_dashboard_tools(TenantRepo(tenant))[0].invoke({"month": month})
+    exp = EXP[tenant]["daily"][month]
+    assert {d["date"]: d["usd"] for d in out["days"]} == exp["total"]
+    assert {d["date"]: d["unattributed_usd"] for d in out["days"]} == exp["unattributed"]
+    assert out["total"]["usd"] == EXP[tenant]["by_month"][month]["total"]
+    assert all(d["krw"] == round(float(d["usd"]) * 1400) for d in out["days"])
+
+
+def test_daily_trend_is_not_an_agent_tool():
+    repo = TenantRepo("honeybee-electronics")
+    assert "get_daily_trend" not in {t.name for t in build_tools(repo)}
+    assert [t.name for t in build_dashboard_tools(repo)] == ["get_daily_trend"]
+
+
+def test_daily_trend_unknown_month():
+    out = build_dashboard_tools(TenantRepo("panda-soft"))[0].invoke({"month": "2025-01"})
+    assert "error" in out and "days" not in out and "2026-09" in out["months"]

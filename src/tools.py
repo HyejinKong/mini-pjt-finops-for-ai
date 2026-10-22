@@ -51,6 +51,13 @@ def change_pct(delta_e8: int, last_e8: int) -> str:
     return str((Decimal(delta_e8) * 100 / Decimal(last_e8)).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))
 
 
+def share_pct(part_e8: int, whole_e8: int) -> str:
+    """전체 중 일부의 비율(%)을 소수 한 자리 문자열로 돌려준다. 전체가 0이면 '0.0'."""
+    if whole_e8 == 0:
+        return "0.0"
+    return str((Decimal(part_e8) * 100 / Decimal(whole_e8)).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))
+
+
 class TenantRepo:
     """한 회사(테넌트)의 사용 로그만 읽는 저장소."""
 
@@ -135,7 +142,7 @@ def build_tools(repo: TenantRepo) -> list:
         두 기준이면 subtotals 에 기준별 소계가 있다. 소계·합계는 직접 계산하지 말고 이 값을 쓴다.
         드릴다운하려면 team 이나 service 로 범위를 좁힌다. month 는 'YYYY-MM' 형식이다.
         금액은 USD(소수 둘째 자리)와 원화 환산값(krw)으로 돌려준다.
-        태그가 없는 비용은 '미귀속'(unattributed)으로 따로 돌려준다. model 이 기준에 있으면
+        태그가 없는 비용은 '미귀속'(unattributed)으로 따로 돌려주고, share_pct 는 전체 중 미귀속 비율(소수 한 자리)이다. model 이 기준에 있으면
         unattributed.by_model 에 미귀속의 모델별 금액이 있다(팀·서비스·기능에는 나누지 않는다).
         total 은 미귀속을 포함한 전체 합계이고, 미귀속을 뺀 합계는 tagged_total 이다.
         '이번 달 팀별 비용', '고객지원팀 서비스별 비용', '9월 팀별·모델별 비용 표' 같은 질문에 쓴다."""
@@ -163,7 +170,8 @@ def build_tools(repo: TenantRepo) -> list:
                     sub[k[i]] = sub.get(k[i], 0) + v
                 result["subtotals"][d] = [{d: k, **repo.money(v)} for k, v in sorted(sub.items(), key=lambda kv: (-kv[1], kv[0]))]
         if team is None and service is None:
-            result["unattributed"] = {"key": UNATTRIBUTED, **repo.money(unattributed)}
+            result["unattributed"] = {"key": UNATTRIBUTED, **repo.money(unattributed),
+                                      "share_pct": share_pct(unattributed, sum(groups.values()) + unattributed)}
             if "model" in dims:
                 by_model = repo.unattributed_by(month, "model_id")
                 result["unattributed"]["by_model"] = [
@@ -187,6 +195,7 @@ def build_tools(repo: TenantRepo) -> list:
         team 이나 service 로 범위를 좁힐 수 있다(예: 고객지원팀의 모델별 전월 대비).
         순위는 USD 증감액 기준이며 증감률(pct_or_new)은 소수 한 자리다. 지난달 비용이 0인 항목은 '신규'로 표시한다.
         미귀속 비용은 순위에서 빼고 unattributed 로 따로 돌려준다. 범위를 좁히면 미귀속은 빠진다.
+        total 은 범위 전체(범위를 좁히지 않으면 미귀속 포함)의 지난달·이번 달 합계와 증감이다. 직접 더하지 말고 이 값을 쓴다.
         증가의 업무상 이유는 데이터에 없으므로 추측하지 않는다.
         '왜 늘었어', '전월 대비 증가 원인', '줄어든 서비스', '고객지원팀 모델별로 뭐가 늘었어' 같은 질문에 쓴다."""
         dims = list(dimension)
@@ -225,6 +234,16 @@ def build_tools(repo: TenantRepo) -> list:
                 }
                 for d, k in items[:top_n]
             ],
+        }
+        this_total, last_total = sum(this.values()) + this_un, sum(last.values()) + last_un
+        result["total"] = {
+            "this_usd": to_usd(this_total),
+            "this_krw": to_krw(this_total, rate),
+            "last_usd": to_usd(last_total),
+            "last_krw": to_krw(last_total, rate),
+            "delta_usd": to_usd(this_total - last_total),
+            "delta_krw": to_krw(this_total - last_total, rate),
+            "pct_or_new": change_pct(this_total - last_total, last_total),
         }
         if team is None and service is None:
             result["unattributed"] = {
@@ -285,3 +304,33 @@ def build_tools(repo: TenantRepo) -> list:
         }
 
     return [get_cost_breakdown, get_mom_change, simulate_model_swap]
+
+
+def build_dashboard_tools(repo: TenantRepo) -> list:
+    """대시보드 전용 도구를 만든다. 에이전트에는 등록하지 않는다(인-아웃 세트와 채점 밖)."""
+
+    @tool
+    def get_daily_trend(month: str = "2026-09") -> dict:
+        """현재 사용자 회사의 month('YYYY-MM') 일별 Bedrock 비용을 돌려준다(회사 전체, 범위 인자 없음).
+        days 의 각 날짜에 전체 금액(usd, krw)과 그중 미귀속 금액(unattributed_usd, unattributed_krw)이 있다.
+        월 합계는 total 을 쓴다. 일별 금액은 각각 반올림한 값이라 더하면 total 과 센트 단위로 다를 수 있다."""
+        rows = [r for r in repo.rows if r["date"].startswith(month)]
+        if not rows:
+            return {"error": f"{month} 데이터가 없습니다.", "months": sorted({r["date"][:7] for r in repo.rows})}
+        days, unattributed = {}, {}
+        for r in rows:
+            c = repo.cost_e8(r)
+            days[r["date"]] = days.get(r["date"], 0) + c
+            unattributed[r["date"]] = unattributed.get(r["date"], 0) + (0 if r["team"] else c)
+        rate = repo.settings["krw_rate"]
+        return {
+            "period": month,
+            "days": [
+                {"date": d, **repo.money(v),
+                 "unattributed_usd": to_usd(unattributed[d]), "unattributed_krw": to_krw(unattributed[d], rate)}
+                for d, v in sorted(days.items())
+            ],
+            "total": repo.money(sum(days.values())),
+        }
+
+    return [get_daily_trend]
