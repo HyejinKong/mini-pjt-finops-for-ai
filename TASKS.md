@@ -6,6 +6,7 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
 ## 결정 사항 (2026-10-22, 중간 피드백 반영)
 - 인증: 로그인은 만들지 않는다. 기본은 회사별 고정 토큰 2개(`AUTH_MODE=static`). 지금의 서명 JWT 코드는 지우지 않고 `AUTH_MODE=jwt` 선택 모드로 남긴다
 - 회사명: 저장소가 공개되므로 가상 이름으로 바꾼다. 과거 이력은 다시 쓰지 않고 새 커밋으로만 바꾼다
+- 커밋: 묶음 3부터는 작업 하나에 커밋 하나(확인 통과 후, 체크 갱신 포함)
 - 유지: 미귀속 별도 줄, 시간이 부족하면 what-if(`simulate_model_swap`)를 가장 먼저 미룬다
 
 | 기존 | 새 이름 | tenant_id | 사용자 접두어 | 토큰 환경변수 |
@@ -54,7 +55,7 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
 - [ ] 3-3 (1시간) `src/tools.py`: `simulate_model_swap`(토큰 수 동일 가정, 입력·출력 단가 따로 재계산, "품질 차이 미반영" 문구). 시간이 부족하면 이 작업을 건너뛰고 q05 를 집계·전월 대비 문항으로 바꾼다
   - 확인: `python evaluation/run_eval.py --llm stub` 에서 q05 통과, 전체 10/12 이상 유지
   - 참고: 2-2 뒤 bedrock 1회 실행(11/12)에서 q05 는 도구가 없어 Sonnet 9월 비용 전액($1,795.48)을 절감액이라고 잘못 답했다. 도구가 생기면 반드시 그 결과만 쓰게 한다
-- 커밋: feat(tools) search_reference·simulate_model_swap
+- 커밋: 작업마다 하나(3-1 feat(retriever), 3-2 fix(agent), 3-3 feat(tools))
 
 ## 묶음 4. 문서와 실제 모델 채점 (3일차)
 - [ ] 4-1 (40분) `CLAUDE.md` 의 인증 항목(기술 스택, api.py 설명, 주고받는 형식, 테넌트 규칙, 비밀 값)을 고정 토큰 기본·JWT 선택으로 고친다. seed 를 `seed_ce738e162660.v1.1.0.yaml` 로 백업하고 v1.2.0 으로 고친다
@@ -63,7 +64,7 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
   - 확인: `python evaluation/check_docs.py` 종료 코드 0
 - [ ] 4-3 (40분) `python evaluation/run_eval.py --llm bedrock` 실행, 결과를 `evaluation/eval_report_live.json` 에 저장하고 SERVICE.md 5장 "미측정" 을 실제 통과율로 바꾼다
   - 확인: eval_report_live.json 이 있고 SERVICE.md 5장에 카테고리별·전체 통과율이 적혀 있다
-- 커밋: docs CLAUDE.md·seed·채점 결과
+- 커밋: 작업마다 하나(4-1 docs, 4-2 feat(eval), 4-3 docs)
 
 ## 묶음 5. 시간이 남으면
 - [ ] 5-1 (30분) JWT 모드 점검: `AUTH_MODE=jwt` 로 전체 테스트와 `run_eval.py --auth jwt --llm stub` 을 돌린다
