@@ -2,6 +2,7 @@
 
 import json
 import sys
+from decimal import Decimal
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -11,28 +12,42 @@ from run_eval import check_grounded
 from src.tools import TenantRepo, build_tools
 
 
-def model_breakdown_contexts():
-    """q03(판다소프트 9월 모델별)과 같은 도구 결과 contexts."""
+def model_breakdown():
+    """판다소프트 9월 모델별 집계 결과."""
     tools = {t.name: t for t in build_tools(TenantRepo("panda-soft"))}
-    out = tools["get_cost_breakdown"].invoke({"group_by": "model", "month": "2026-09"})
+    return tools["get_cost_breakdown"].invoke({"group_by": "model", "month": "2026-09"})
+
+
+def contexts_of(out):
+    """도구 결과 하나를 contexts 형식으로 감싼다."""
     return [{"tool": "get_cost_breakdown", "content": json.dumps(out, ensure_ascii=False)}]
 
 
+def money(m):
+    """도구 금액을 답변 표기 '$X (약 N원)' 로 쓴다."""
+    return f"${float(m['usd']):,.2f} (약 {m['krw']:,}원)"
+
+
 def test_grounded_answer_passes():
-    answer = ("claude-haiku $308.05 (약 431,270원), 미귀속 $116.81 (약 163,534원), "
-              "전체 합계 $791.43 (약 1,108,002원), 미귀속 제외 $674.62 (약 944,468원)")
-    assert check_grounded(answer, model_breakdown_contexts()) == []
+    out = model_breakdown()
+    answer = (f"{out['rows'][0]['key']} {money(out['rows'][0])}, 미귀속 {money(out['unattributed'])}, "
+              f"전체 합계 {money(out['total'])}, 미귀속 제외 {money(out['tagged_total'])}")
+    assert check_grounded(answer, contexts_of(out)) == []
 
 
 def test_invented_total_is_caught():
-    # 4-3 첫 bedrock 실행의 q03: 미귀속이 포함된 total 에 미귀속을 또 더했다
-    answer = "**소계** $791.43 (약 1,108,002원)\n**전체 합계: $908.24 (약 1,271,536원)**"
-    assert check_grounded(answer, model_breakdown_contexts()) == ["908.24", "1,271,536"]
+    # 4-3 첫 bedrock 실행의 q03 처럼, 미귀속이 포함된 total 에 미귀속을 또 더한 합계를 지어낸다
+    out = model_breakdown()
+    invented_usd = Decimal(out["total"]["usd"]) + Decimal(out["unattributed"]["usd"])
+    invented = {"usd": str(invented_usd), "krw": int(invented_usd * 1400)}
+    answer = f"**소계** {money(out['total'])}\n**전체 합계: {money(invented)}**"
+    assert check_grounded(answer, contexts_of(out)) == [f"{invented_usd:,.2f}", f"{invented['krw']:,}"]
 
 
 def test_invented_share_is_caught():
-    answer = "claude-haiku 가 전체의 약 39% 입니다. $308.05"
-    assert check_grounded(answer, model_breakdown_contexts()) == ["39"]
+    out = model_breakdown()
+    answer = f"{out['rows'][0]['key']} 가 전체의 약 97% 입니다. ${out['rows'][0]['usd']}"
+    assert check_grounded(answer, contexts_of(out)) == ["97"]
 
 
 def test_sign_is_ignored():

@@ -93,13 +93,16 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
 
 - [x] 6-0 (15분) seed 를 `seed_ce738e162660.v1.3.0.yaml` 로 백업하고 v1.4.0 으로 고친다: 1~2개 기준 집계, 기준별 소계·합계는 도구가 계산, 모델 기준 미귀속은 미귀속 안에서만 모델별, 전월 대비 범위(team·service)와 두 기준 조합
   - 확인: seed 에 위 네 내용이 있고 YAML 로 읽힌다
-- [ ] 6-1 (1시간) `data/generate.py` 가 `tools.py` 와 독립적으로 두 기준 교차 합계(9월·8월, 서로 다른 두 기준 모든 쌍), 기준별 소계, 미귀속의 모델별 금액, 두 기준 조합·범위 지정 전월 대비 상위 3개를 `expected_values.json` 에 더한다. 사용 로그와 기존 정답값은 바꾸지 않는다
-  - 확인: 다시 생성한 뒤 `git diff data/usage` 가 비어 있고, 기존 `expected_values.json` 값은 그대로이며 새 키만 늘었다. 두 회사 금액 겹침 검사(생성기 안)가 통과한다. 겹치면 생성을 멈추고 이 줄 아래에 적은 뒤 사용자에게 묻는다(데이터를 다시 만들면 모든 정답이 바뀐다)
-- [ ] 6-2 (1시간) `src/tools.py` `get_cost_breakdown(group_by: list, month, team, service)`: 행은 기준 이름을 필드로 갖고(`{"team": .., "model": .., "usd": .., "krw": ..}`), 두 기준이면 `subtotals`(기준별 소계)를 더한다. `total`·`tagged_total`·`unattributed` 는 지금 의미 그대로이고, model 이 기준에 있으면 `unattributed.by_model` 을 더한다. `src/agent.py` 프롬프트(교차 표 질문은 두 기준 한 번 호출, 합계·소계는 도구 값만), `evaluation/run_eval.py` stub 계획·답변, 기존 테스트를 새 형식으로 고친다
+- [x] 6-1 (1시간) `data/generate.py` 가 `tools.py` 와 독립적으로 두 기준 교차 합계(9월·8월, 서로 다른 두 기준 모든 쌍), 미귀속의 모델별 금액, 두 기준 조합·범위 지정 전월 대비 상위 3개를 `expected_values.json` 의 `multi` 에 더한다. 새 금액도 시드 탐색의 겹침 검사에 넣어 겹치지 않는 시드로 데이터를 다시 만든다. `write_test_queries` 의 q03 을 교차 표 문항으로 바꾼다(expected_traits 는 판다소프트 9월 팀 × 모델 칸 금액, forbidden 은 지금과 같은 규칙). `tests/test_run_eval.py` 의 고정 금액은 도구 결과에서 만들도록 바꾼다
+  - 확인: 생성 성공(겹침 0, 미귀속 10~20%), `expected_values.json` 의 기존 키 구조는 그대로이고 `multi` 만 늘었다. `python -m pytest -q` 통과, `python evaluation/run_eval.py --llm stub` 은 q03 만 실패 가능(교차 표 stub 계획은 6-2)하고 11/12 이상·guardrail 2/2·노출 0
+  - 막힘 → 해결(2026-10-22): 범위 지정 전월 대비(검색플랫폼팀 모델별 증가)에서 두 회사 증가액이 $0.04 로 겹쳐 생성기가 멈췄다. 사용자 결정으로 새 금액까지 겹치지 않는 시드로 데이터를 다시 만든다
+  - 결과(2026-10-22): 생성 성공(겹침 0, 9월 미귀속 14.5%·14.8%), 기존 키 유지·`multi` 추가, 교차 합계가 단일 기준 합계와 일치, pytest 95건 통과, stub 11/12(q03 만 실패, 6-2 에서 해결)
+  - 영향: 모든 금액·정답·인-아웃 세트 기대값이 바뀐다. 위 "참고" 줄과 SERVICE.md 5장의 금액은 재생성 전 데이터 기준 기록이다. bedrock 결과는 6-4 에서 새 데이터로 다시 적는다
+- [ ] 6-2 (1시간) `src/tools.py` `get_cost_breakdown(group_by: list, month, team, service)`: 행은 기준 이름을 필드로 갖고(`{"team": .., "model": .., "usd": .., "krw": ..}`), 두 기준이면 `subtotals`(기준별 소계)를 더한다. `total`·`tagged_total`·`unattributed` 는 지금 의미 그대로이고, model 이 기준에 있으면 `unattributed.by_model` 을 더한다. `src/agent.py` 프롬프트(교차 표 질문은 두 기준 한 번 호출, 합계·소계는 도구 값만), `evaluation/run_eval.py` stub 계획·답변(새 q03 은 `group_by=["team","model"]` 한 번 호출), 기존 테스트를 새 형식으로 고친다
   - 확인: `python -m pytest -q` 통과(교차 합계·소계·미귀속 모델별이 6-1 정답과 일치하는 테스트 추가), `python evaluation/run_eval.py --llm stub` 12/12 유지
 - [ ] 6-3 (45분) `get_mom_change` 에 `team`·`service` 범위 인자와 1~2개 기준 `dimension` 목록을 더한다. 순위는 지금처럼 USD 증감액 기준, 미귀속은 범위를 좁히면 빠진다(집계와 같은 규칙)
   - 확인: `python -m pytest -q` 통과(범위·두 기준 전월 대비가 6-1 정답과 일치), stub 12/12 유지
 - [ ] 6-4 (30분) `--llm bedrock` 재실행과 교차 표 실제 질문 1회("9월 팀별·모델별 비용 표로 보여줘")
   - 확인: 재실행 10/12 이상·노출 0, 교차 표 답변의 금액·원화가 모두 contexts 값이다(숫자 근거 규칙과 같은 대조). SERVICE.md 5장을 고친다
 - 커밋: 작업마다 하나(6-0 docs, 6-1 feat(data), 6-2 feat(tools), 6-3 feat(tools), 6-4 docs)
-- 정할 것: 인-아웃 세트(12건, 5/2/3/2)에 교차 표 문항을 넣을지. 넣으면 q03(모델별 비용)을 "팀별·모델별 비용" 으로 바꾸는 방식을 권한다. 정해지기 전에는 세트를 바꾸지 않는다
+- 결정(2026-10-22): 인-아웃 세트의 q03 "9월 모델별 비용 알려줘" 를 "9월 팀별·모델별 비용 표로 보여줘"(판다소프트, positive)로 바꾼다. 12건·5/2/3/2 비율은 그대로다

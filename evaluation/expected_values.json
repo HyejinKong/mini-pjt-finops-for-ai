@@ -4,197 +4,196 @@
     "by_month": {
       "2026-09": {
         "team": {
-          "고객지원팀": "539.19",
-          "검색플랫폼팀": "1094.17",
-          "마케팅팀": "468.74"
+          "고객지원팀": "668.60",
+          "검색플랫폼팀": "589.72",
+          "마케팅팀": "396.44"
         },
         "service": {
-          "상담봇": "175.66",
-          "메일분류": "363.53",
-          "사내검색": "33.47",
-          "추천": "1060.70",
-          "카피생성": "437.44",
-          "리포트": "31.30"
+          "상담봇": "272.36",
+          "메일분류": "396.24",
+          "사내검색": "199.70",
+          "추천": "390.02",
+          "카피생성": "335.90",
+          "리포트": "60.55"
         },
         "feature": {
-          "FAQ응답": "115.57",
-          "상담요약": "60.08",
-          "문의분류": "2.23",
-          "답장초안": "361.30",
-          "문서요약": "22.55",
-          "질의재작성": "10.92",
-          "상품설명": "884.35",
-          "리뷰요약": "176.35",
-          "광고문구": "3.18",
-          "SNS게시물": "434.26",
-          "캠페인분석": "28.80",
-          "주간보고": "2.50"
+          "FAQ응답": "255.69",
+          "상담요약": "16.67",
+          "문의분류": "8.95",
+          "답장초안": "387.29",
+          "문서요약": "191.48",
+          "질의재작성": "8.22",
+          "상품설명": "274.13",
+          "리뷰요약": "115.89",
+          "광고문구": "5.92",
+          "SNS게시물": "329.98",
+          "캠페인분석": "58.46",
+          "주간보고": "2.09"
         },
         "model_id": {
-          "claude-sonnet": "1795.48",
-          "nova-pro": "60.08",
-          "nova-lite": "18.83",
-          "claude-haiku": "227.70"
+          "claude-sonnet": "1247.09",
+          "nova-pro": "16.67",
+          "nova-lite": "25.17",
+          "claude-haiku": "365.82"
         },
-        "total": "2470.98",
-        "unattributed": "368.88",
-        "tagged": "2102.10"
+        "total": "1935.30",
+        "unattributed": "280.54",
+        "tagged": "1654.76"
       },
       "2026-08": {
         "team": {
-          "고객지원팀": "465.29",
-          "검색플랫폼팀": "512.97",
-          "마케팅팀": "478.34"
+          "고객지원팀": "656.19",
+          "검색플랫폼팀": "410.60",
+          "마케팅팀": "391.18"
         },
         "service": {
-          "상담봇": "111.92",
-          "메일분류": "353.37",
-          "사내검색": "33.80",
-          "추천": "479.16",
-          "카피생성": "441.98",
-          "리포트": "36.35"
+          "상담봇": "259.58",
+          "메일분류": "396.61",
+          "사내검색": "203.88",
+          "추천": "206.72",
+          "카피생성": "328.22",
+          "리포트": "62.96"
         },
         "feature": {
-          "FAQ응답": "111.92",
-          "문의분류": "2.29",
-          "답장초안": "351.08",
-          "문서요약": "22.92",
-          "질의재작성": "10.88",
-          "상품설명": "308.86",
-          "리뷰요약": "170.31",
-          "광고문구": "3.13",
-          "SNS게시물": "438.85",
-          "캠페인분석": "30.00",
-          "주간보고": "6.35"
+          "FAQ응답": "259.58",
+          "문의분류": "8.70",
+          "답장초안": "387.91",
+          "문서요약": "195.67",
+          "질의재작성": "8.22",
+          "상품설명": "89.73",
+          "리뷰요약": "116.99",
+          "광고문구": "5.88",
+          "SNS게시물": "322.34",
+          "캠페인분석": "57.49",
+          "주간보고": "5.46"
         },
         "model_id": {
-          "claude-sonnet": "1210.71",
-          "nova-lite": "22.65",
-          "claude-haiku": "223.23"
+          "claude-sonnet": "1059.56",
+          "nova-lite": "28.26",
+          "claude-haiku": "370.15"
         },
-        "total": "1715.40",
-        "unattributed": "258.81",
-        "tagged": "1456.59"
+        "total": "1709.53",
+        "unattributed": "251.56",
+        "tagged": "1457.97"
       }
     },
     "drilldown_service_by_team": {
       "고객지원팀": {
-        "상담봇": "175.66",
-        "메일분류": "363.53"
+        "상담봇": "272.36",
+        "메일분류": "396.24"
       },
       "검색플랫폼팀": {
-        "사내검색": "33.47",
-        "추천": "1060.70"
+        "사내검색": "199.70",
+        "추천": "390.02"
       },
       "마케팅팀": {
-        "카피생성": "437.44",
-        "리포트": "31.30"
+        "카피생성": "335.90",
+        "리포트": "60.55"
       }
     },
     "mom_increase": {
       "team": [
         {
           "key": "검색플랫폼팀",
-          "this_usd": "1094.17",
-          "last_usd": "512.97",
-          "delta_usd": "581.21",
-          "pct_or_new": "113.3"
+          "this_usd": "589.72",
+          "last_usd": "410.60",
+          "delta_usd": "179.12",
+          "pct_or_new": "43.6"
         },
         {
           "key": "고객지원팀",
-          "this_usd": "539.19",
-          "last_usd": "465.29",
-          "delta_usd": "73.90",
-          "pct_or_new": "15.9"
+          "this_usd": "668.60",
+          "last_usd": "656.19",
+          "delta_usd": "12.41",
+          "pct_or_new": "1.9"
+        },
+        {
+          "key": "마케팅팀",
+          "this_usd": "396.44",
+          "last_usd": "391.18",
+          "delta_usd": "5.26",
+          "pct_or_new": "1.3"
         }
       ],
       "service": [
         {
           "key": "추천",
-          "this_usd": "1060.70",
-          "last_usd": "479.16",
-          "delta_usd": "581.54",
-          "pct_or_new": "121.4"
+          "this_usd": "390.02",
+          "last_usd": "206.72",
+          "delta_usd": "183.30",
+          "pct_or_new": "88.7"
         },
         {
           "key": "상담봇",
-          "this_usd": "175.66",
-          "last_usd": "111.92",
-          "delta_usd": "63.74",
-          "pct_or_new": "57.0"
+          "this_usd": "272.36",
+          "last_usd": "259.58",
+          "delta_usd": "12.78",
+          "pct_or_new": "4.9"
         },
         {
-          "key": "메일분류",
-          "this_usd": "363.53",
-          "last_usd": "353.37",
-          "delta_usd": "10.16",
-          "pct_or_new": "2.9"
+          "key": "카피생성",
+          "this_usd": "335.90",
+          "last_usd": "328.22",
+          "delta_usd": "7.67",
+          "pct_or_new": "2.3"
         }
       ],
       "model_id": [
         {
           "key": "claude-sonnet",
-          "this_usd": "1795.48",
-          "last_usd": "1210.71",
-          "delta_usd": "584.77",
-          "pct_or_new": "48.3"
+          "this_usd": "1247.09",
+          "last_usd": "1059.56",
+          "delta_usd": "187.53",
+          "pct_or_new": "17.7"
         },
         {
           "key": "nova-pro",
-          "this_usd": "60.08",
+          "this_usd": "16.67",
           "last_usd": "0.00",
-          "delta_usd": "60.08",
+          "delta_usd": "16.67",
           "pct_or_new": "신규"
-        },
-        {
-          "key": "claude-haiku",
-          "this_usd": "227.70",
-          "last_usd": "223.23",
-          "delta_usd": "4.47",
-          "pct_or_new": "2.0"
         }
       ]
     },
     "mom_decrease": {
-      "team": [
-        {
-          "key": "마케팅팀",
-          "this_usd": "468.74",
-          "last_usd": "478.34",
-          "delta_usd": "-9.60",
-          "pct_or_new": "-2.0"
-        }
-      ],
+      "team": [],
       "service": [
         {
-          "key": "리포트",
-          "this_usd": "31.30",
-          "last_usd": "36.35",
-          "delta_usd": "-5.06",
-          "pct_or_new": "-13.9"
-        },
-        {
-          "key": "카피생성",
-          "this_usd": "437.44",
-          "last_usd": "441.98",
-          "delta_usd": "-4.54",
-          "pct_or_new": "-1.0"
-        },
-        {
           "key": "사내검색",
-          "this_usd": "33.47",
-          "last_usd": "33.80",
-          "delta_usd": "-0.33",
-          "pct_or_new": "-1.0"
+          "this_usd": "199.70",
+          "last_usd": "203.88",
+          "delta_usd": "-4.18",
+          "pct_or_new": "-2.1"
+        },
+        {
+          "key": "리포트",
+          "this_usd": "60.55",
+          "last_usd": "62.96",
+          "delta_usd": "-2.41",
+          "pct_or_new": "-3.8"
+        },
+        {
+          "key": "메일분류",
+          "this_usd": "396.24",
+          "last_usd": "396.61",
+          "delta_usd": "-0.37",
+          "pct_or_new": "-0.1"
         }
       ],
       "model_id": [
         {
+          "key": "claude-haiku",
+          "this_usd": "365.82",
+          "last_usd": "370.15",
+          "delta_usd": "-4.33",
+          "pct_or_new": "-1.2"
+        },
+        {
           "key": "nova-lite",
-          "this_usd": "18.83",
-          "last_usd": "22.65",
-          "delta_usd": "-3.82",
-          "pct_or_new": "-16.9"
+          "this_usd": "25.17",
+          "last_usd": "28.26",
+          "delta_usd": "-3.09",
+          "pct_or_new": "-10.9"
         }
       ]
     },
@@ -204,11 +203,11 @@
         "y": "claude-haiku",
         "month": "2026-09",
         "scope": "tenant",
-        "input_tokens": 260267995,
-        "output_tokens": 79022565,
-        "before_usd": "1966.14",
-        "after_usd": "655.38",
-        "saving_usd": "1310.76",
+        "input_tokens": 155615355,
+        "output_tokens": 56419254,
+        "before_usd": "1313.13",
+        "after_usd": "437.71",
+        "saving_usd": "875.42",
         "kind": "saving"
       },
       {
@@ -216,11 +215,11 @@
         "y": "claude-sonnet",
         "month": "2026-09",
         "scope": "tenant",
-        "input_tokens": 132966620,
-        "output_tokens": 45893162,
-        "before_usd": "362.43",
-        "after_usd": "1087.30",
-        "saving_usd": "-724.86",
+        "input_tokens": 185867972,
+        "output_tokens": 58915052,
+        "before_usd": "480.44",
+        "after_usd": "1441.33",
+        "saving_usd": "-960.89",
         "kind": "increase"
       }
     ],
@@ -229,6 +228,964 @@
       "decline": "주간보고",
       "new": "상담요약",
       "new_model": "nova-pro"
+    },
+    "multi": {
+      "cross": {
+        "2026-09": {
+          "team,service": [
+            {
+              "team": "검색플랫폼팀",
+              "service": "사내검색",
+              "usd": "199.70"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "service": "추천",
+              "usd": "390.02"
+            },
+            {
+              "team": "고객지원팀",
+              "service": "메일분류",
+              "usd": "396.24"
+            },
+            {
+              "team": "고객지원팀",
+              "service": "상담봇",
+              "usd": "272.36"
+            },
+            {
+              "team": "마케팅팀",
+              "service": "리포트",
+              "usd": "60.55"
+            },
+            {
+              "team": "마케팅팀",
+              "service": "카피생성",
+              "usd": "335.90"
+            }
+          ],
+          "team,feature": [
+            {
+              "team": "검색플랫폼팀",
+              "feature": "리뷰요약",
+              "usd": "115.89"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "feature": "문서요약",
+              "usd": "191.48"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "feature": "상품설명",
+              "usd": "274.13"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "feature": "질의재작성",
+              "usd": "8.22"
+            },
+            {
+              "team": "고객지원팀",
+              "feature": "FAQ응답",
+              "usd": "255.69"
+            },
+            {
+              "team": "고객지원팀",
+              "feature": "답장초안",
+              "usd": "387.29"
+            },
+            {
+              "team": "고객지원팀",
+              "feature": "문의분류",
+              "usd": "8.95"
+            },
+            {
+              "team": "고객지원팀",
+              "feature": "상담요약",
+              "usd": "16.67"
+            },
+            {
+              "team": "마케팅팀",
+              "feature": "SNS게시물",
+              "usd": "329.98"
+            },
+            {
+              "team": "마케팅팀",
+              "feature": "광고문구",
+              "usd": "5.92"
+            },
+            {
+              "team": "마케팅팀",
+              "feature": "주간보고",
+              "usd": "2.09"
+            },
+            {
+              "team": "마케팅팀",
+              "feature": "캠페인분석",
+              "usd": "58.46"
+            }
+          ],
+          "team,model_id": [
+            {
+              "team": "검색플랫폼팀",
+              "model_id": "claude-haiku",
+              "usd": "307.37"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "model_id": "claude-sonnet",
+              "usd": "274.13"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "model_id": "nova-lite",
+              "usd": "8.22"
+            },
+            {
+              "team": "고객지원팀",
+              "model_id": "claude-sonnet",
+              "usd": "642.98"
+            },
+            {
+              "team": "고객지원팀",
+              "model_id": "nova-lite",
+              "usd": "8.95"
+            },
+            {
+              "team": "고객지원팀",
+              "model_id": "nova-pro",
+              "usd": "16.67"
+            },
+            {
+              "team": "마케팅팀",
+              "model_id": "claude-haiku",
+              "usd": "58.46"
+            },
+            {
+              "team": "마케팅팀",
+              "model_id": "claude-sonnet",
+              "usd": "329.98"
+            },
+            {
+              "team": "마케팅팀",
+              "model_id": "nova-lite",
+              "usd": "8.01"
+            }
+          ],
+          "service,feature": [
+            {
+              "service": "리포트",
+              "feature": "주간보고",
+              "usd": "2.09"
+            },
+            {
+              "service": "리포트",
+              "feature": "캠페인분석",
+              "usd": "58.46"
+            },
+            {
+              "service": "메일분류",
+              "feature": "답장초안",
+              "usd": "387.29"
+            },
+            {
+              "service": "메일분류",
+              "feature": "문의분류",
+              "usd": "8.95"
+            },
+            {
+              "service": "사내검색",
+              "feature": "문서요약",
+              "usd": "191.48"
+            },
+            {
+              "service": "사내검색",
+              "feature": "질의재작성",
+              "usd": "8.22"
+            },
+            {
+              "service": "상담봇",
+              "feature": "FAQ응답",
+              "usd": "255.69"
+            },
+            {
+              "service": "상담봇",
+              "feature": "상담요약",
+              "usd": "16.67"
+            },
+            {
+              "service": "추천",
+              "feature": "리뷰요약",
+              "usd": "115.89"
+            },
+            {
+              "service": "추천",
+              "feature": "상품설명",
+              "usd": "274.13"
+            },
+            {
+              "service": "카피생성",
+              "feature": "SNS게시물",
+              "usd": "329.98"
+            },
+            {
+              "service": "카피생성",
+              "feature": "광고문구",
+              "usd": "5.92"
+            }
+          ],
+          "service,model_id": [
+            {
+              "service": "리포트",
+              "model_id": "claude-haiku",
+              "usd": "58.46"
+            },
+            {
+              "service": "리포트",
+              "model_id": "nova-lite",
+              "usd": "2.09"
+            },
+            {
+              "service": "메일분류",
+              "model_id": "claude-sonnet",
+              "usd": "387.29"
+            },
+            {
+              "service": "메일분류",
+              "model_id": "nova-lite",
+              "usd": "8.95"
+            },
+            {
+              "service": "사내검색",
+              "model_id": "claude-haiku",
+              "usd": "191.48"
+            },
+            {
+              "service": "사내검색",
+              "model_id": "nova-lite",
+              "usd": "8.22"
+            },
+            {
+              "service": "상담봇",
+              "model_id": "claude-sonnet",
+              "usd": "255.69"
+            },
+            {
+              "service": "상담봇",
+              "model_id": "nova-pro",
+              "usd": "16.67"
+            },
+            {
+              "service": "추천",
+              "model_id": "claude-haiku",
+              "usd": "115.89"
+            },
+            {
+              "service": "추천",
+              "model_id": "claude-sonnet",
+              "usd": "274.13"
+            },
+            {
+              "service": "카피생성",
+              "model_id": "claude-sonnet",
+              "usd": "329.98"
+            },
+            {
+              "service": "카피생성",
+              "model_id": "nova-lite",
+              "usd": "5.92"
+            }
+          ],
+          "feature,model_id": [
+            {
+              "feature": "FAQ응답",
+              "model_id": "claude-sonnet",
+              "usd": "255.69"
+            },
+            {
+              "feature": "SNS게시물",
+              "model_id": "claude-sonnet",
+              "usd": "329.98"
+            },
+            {
+              "feature": "광고문구",
+              "model_id": "nova-lite",
+              "usd": "5.92"
+            },
+            {
+              "feature": "답장초안",
+              "model_id": "claude-sonnet",
+              "usd": "387.29"
+            },
+            {
+              "feature": "리뷰요약",
+              "model_id": "claude-haiku",
+              "usd": "115.89"
+            },
+            {
+              "feature": "문서요약",
+              "model_id": "claude-haiku",
+              "usd": "191.48"
+            },
+            {
+              "feature": "문의분류",
+              "model_id": "nova-lite",
+              "usd": "8.95"
+            },
+            {
+              "feature": "상담요약",
+              "model_id": "nova-pro",
+              "usd": "16.67"
+            },
+            {
+              "feature": "상품설명",
+              "model_id": "claude-sonnet",
+              "usd": "274.13"
+            },
+            {
+              "feature": "주간보고",
+              "model_id": "nova-lite",
+              "usd": "2.09"
+            },
+            {
+              "feature": "질의재작성",
+              "model_id": "nova-lite",
+              "usd": "8.22"
+            },
+            {
+              "feature": "캠페인분석",
+              "model_id": "claude-haiku",
+              "usd": "58.46"
+            }
+          ]
+        },
+        "2026-08": {
+          "team,service": [
+            {
+              "team": "검색플랫폼팀",
+              "service": "사내검색",
+              "usd": "203.88"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "service": "추천",
+              "usd": "206.72"
+            },
+            {
+              "team": "고객지원팀",
+              "service": "메일분류",
+              "usd": "396.61"
+            },
+            {
+              "team": "고객지원팀",
+              "service": "상담봇",
+              "usd": "259.58"
+            },
+            {
+              "team": "마케팅팀",
+              "service": "리포트",
+              "usd": "62.96"
+            },
+            {
+              "team": "마케팅팀",
+              "service": "카피생성",
+              "usd": "328.22"
+            }
+          ],
+          "team,feature": [
+            {
+              "team": "검색플랫폼팀",
+              "feature": "리뷰요약",
+              "usd": "116.99"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "feature": "문서요약",
+              "usd": "195.67"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "feature": "상품설명",
+              "usd": "89.73"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "feature": "질의재작성",
+              "usd": "8.22"
+            },
+            {
+              "team": "고객지원팀",
+              "feature": "FAQ응답",
+              "usd": "259.58"
+            },
+            {
+              "team": "고객지원팀",
+              "feature": "답장초안",
+              "usd": "387.91"
+            },
+            {
+              "team": "고객지원팀",
+              "feature": "문의분류",
+              "usd": "8.70"
+            },
+            {
+              "team": "마케팅팀",
+              "feature": "SNS게시물",
+              "usd": "322.34"
+            },
+            {
+              "team": "마케팅팀",
+              "feature": "광고문구",
+              "usd": "5.88"
+            },
+            {
+              "team": "마케팅팀",
+              "feature": "주간보고",
+              "usd": "5.46"
+            },
+            {
+              "team": "마케팅팀",
+              "feature": "캠페인분석",
+              "usd": "57.49"
+            }
+          ],
+          "team,model_id": [
+            {
+              "team": "검색플랫폼팀",
+              "model_id": "claude-haiku",
+              "usd": "312.66"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "model_id": "claude-sonnet",
+              "usd": "89.73"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "model_id": "nova-lite",
+              "usd": "8.22"
+            },
+            {
+              "team": "고객지원팀",
+              "model_id": "claude-sonnet",
+              "usd": "647.49"
+            },
+            {
+              "team": "고객지원팀",
+              "model_id": "nova-lite",
+              "usd": "8.70"
+            },
+            {
+              "team": "마케팅팀",
+              "model_id": "claude-haiku",
+              "usd": "57.49"
+            },
+            {
+              "team": "마케팅팀",
+              "model_id": "claude-sonnet",
+              "usd": "322.34"
+            },
+            {
+              "team": "마케팅팀",
+              "model_id": "nova-lite",
+              "usd": "11.35"
+            }
+          ],
+          "service,feature": [
+            {
+              "service": "리포트",
+              "feature": "주간보고",
+              "usd": "5.46"
+            },
+            {
+              "service": "리포트",
+              "feature": "캠페인분석",
+              "usd": "57.49"
+            },
+            {
+              "service": "메일분류",
+              "feature": "답장초안",
+              "usd": "387.91"
+            },
+            {
+              "service": "메일분류",
+              "feature": "문의분류",
+              "usd": "8.70"
+            },
+            {
+              "service": "사내검색",
+              "feature": "문서요약",
+              "usd": "195.67"
+            },
+            {
+              "service": "사내검색",
+              "feature": "질의재작성",
+              "usd": "8.22"
+            },
+            {
+              "service": "상담봇",
+              "feature": "FAQ응답",
+              "usd": "259.58"
+            },
+            {
+              "service": "추천",
+              "feature": "리뷰요약",
+              "usd": "116.99"
+            },
+            {
+              "service": "추천",
+              "feature": "상품설명",
+              "usd": "89.73"
+            },
+            {
+              "service": "카피생성",
+              "feature": "SNS게시물",
+              "usd": "322.34"
+            },
+            {
+              "service": "카피생성",
+              "feature": "광고문구",
+              "usd": "5.88"
+            }
+          ],
+          "service,model_id": [
+            {
+              "service": "리포트",
+              "model_id": "claude-haiku",
+              "usd": "57.49"
+            },
+            {
+              "service": "리포트",
+              "model_id": "nova-lite",
+              "usd": "5.46"
+            },
+            {
+              "service": "메일분류",
+              "model_id": "claude-sonnet",
+              "usd": "387.91"
+            },
+            {
+              "service": "메일분류",
+              "model_id": "nova-lite",
+              "usd": "8.70"
+            },
+            {
+              "service": "사내검색",
+              "model_id": "claude-haiku",
+              "usd": "195.67"
+            },
+            {
+              "service": "사내검색",
+              "model_id": "nova-lite",
+              "usd": "8.22"
+            },
+            {
+              "service": "상담봇",
+              "model_id": "claude-sonnet",
+              "usd": "259.58"
+            },
+            {
+              "service": "추천",
+              "model_id": "claude-haiku",
+              "usd": "116.99"
+            },
+            {
+              "service": "추천",
+              "model_id": "claude-sonnet",
+              "usd": "89.73"
+            },
+            {
+              "service": "카피생성",
+              "model_id": "claude-sonnet",
+              "usd": "322.34"
+            },
+            {
+              "service": "카피생성",
+              "model_id": "nova-lite",
+              "usd": "5.88"
+            }
+          ],
+          "feature,model_id": [
+            {
+              "feature": "FAQ응답",
+              "model_id": "claude-sonnet",
+              "usd": "259.58"
+            },
+            {
+              "feature": "SNS게시물",
+              "model_id": "claude-sonnet",
+              "usd": "322.34"
+            },
+            {
+              "feature": "광고문구",
+              "model_id": "nova-lite",
+              "usd": "5.88"
+            },
+            {
+              "feature": "답장초안",
+              "model_id": "claude-sonnet",
+              "usd": "387.91"
+            },
+            {
+              "feature": "리뷰요약",
+              "model_id": "claude-haiku",
+              "usd": "116.99"
+            },
+            {
+              "feature": "문서요약",
+              "model_id": "claude-haiku",
+              "usd": "195.67"
+            },
+            {
+              "feature": "문의분류",
+              "model_id": "nova-lite",
+              "usd": "8.70"
+            },
+            {
+              "feature": "상품설명",
+              "model_id": "claude-sonnet",
+              "usd": "89.73"
+            },
+            {
+              "feature": "주간보고",
+              "model_id": "nova-lite",
+              "usd": "5.46"
+            },
+            {
+              "feature": "질의재작성",
+              "model_id": "nova-lite",
+              "usd": "8.22"
+            },
+            {
+              "feature": "캠페인분석",
+              "model_id": "claude-haiku",
+              "usd": "57.49"
+            }
+          ]
+        }
+      },
+      "unattributed_by_model": {
+        "2026-09": {
+          "claude-haiku": "114.62",
+          "claude-sonnet": "66.05",
+          "nova-lite": "99.88"
+        },
+        "2026-08": {
+          "claude-haiku": "100.95",
+          "claude-sonnet": "87.70",
+          "nova-lite": "62.91"
+        }
+      },
+      "mom_cross": {
+        "increase": {
+          "team,service": [
+            {
+              "team": "검색플랫폼팀",
+              "service": "추천",
+              "this_usd": "390.02",
+              "last_usd": "206.72",
+              "delta_usd": "183.30",
+              "pct_or_new": "88.7"
+            },
+            {
+              "team": "고객지원팀",
+              "service": "상담봇",
+              "this_usd": "272.36",
+              "last_usd": "259.58",
+              "delta_usd": "12.78",
+              "pct_or_new": "4.9"
+            },
+            {
+              "team": "마케팅팀",
+              "service": "카피생성",
+              "this_usd": "335.90",
+              "last_usd": "328.22",
+              "delta_usd": "7.67",
+              "pct_or_new": "2.3"
+            }
+          ],
+          "team,model_id": [
+            {
+              "team": "검색플랫폼팀",
+              "model_id": "claude-sonnet",
+              "this_usd": "274.13",
+              "last_usd": "89.73",
+              "delta_usd": "184.41",
+              "pct_or_new": "205.5"
+            },
+            {
+              "team": "고객지원팀",
+              "model_id": "nova-pro",
+              "this_usd": "16.67",
+              "last_usd": "0.00",
+              "delta_usd": "16.67",
+              "pct_or_new": "신규"
+            },
+            {
+              "team": "마케팅팀",
+              "model_id": "claude-sonnet",
+              "this_usd": "329.98",
+              "last_usd": "322.34",
+              "delta_usd": "7.64",
+              "pct_or_new": "2.4"
+            }
+          ],
+          "service,model_id": [
+            {
+              "service": "추천",
+              "model_id": "claude-sonnet",
+              "this_usd": "274.13",
+              "last_usd": "89.73",
+              "delta_usd": "184.41",
+              "pct_or_new": "205.5"
+            },
+            {
+              "service": "상담봇",
+              "model_id": "nova-pro",
+              "this_usd": "16.67",
+              "last_usd": "0.00",
+              "delta_usd": "16.67",
+              "pct_or_new": "신규"
+            },
+            {
+              "service": "카피생성",
+              "model_id": "claude-sonnet",
+              "this_usd": "329.98",
+              "last_usd": "322.34",
+              "delta_usd": "7.64",
+              "pct_or_new": "2.4"
+            }
+          ]
+        },
+        "decrease": {
+          "team,service": [
+            {
+              "team": "검색플랫폼팀",
+              "service": "사내검색",
+              "this_usd": "199.70",
+              "last_usd": "203.88",
+              "delta_usd": "-4.18",
+              "pct_or_new": "-2.1"
+            },
+            {
+              "team": "마케팅팀",
+              "service": "리포트",
+              "this_usd": "60.55",
+              "last_usd": "62.96",
+              "delta_usd": "-2.41",
+              "pct_or_new": "-3.8"
+            },
+            {
+              "team": "고객지원팀",
+              "service": "메일분류",
+              "this_usd": "396.24",
+              "last_usd": "396.61",
+              "delta_usd": "-0.37",
+              "pct_or_new": "-0.1"
+            }
+          ],
+          "team,model_id": [
+            {
+              "team": "검색플랫폼팀",
+              "model_id": "claude-haiku",
+              "this_usd": "307.37",
+              "last_usd": "312.66",
+              "delta_usd": "-5.29",
+              "pct_or_new": "-1.7"
+            },
+            {
+              "team": "고객지원팀",
+              "model_id": "claude-sonnet",
+              "this_usd": "642.98",
+              "last_usd": "647.49",
+              "delta_usd": "-4.52",
+              "pct_or_new": "-0.7"
+            },
+            {
+              "team": "마케팅팀",
+              "model_id": "nova-lite",
+              "this_usd": "8.01",
+              "last_usd": "11.35",
+              "delta_usd": "-3.34",
+              "pct_or_new": "-29.4"
+            }
+          ],
+          "service,model_id": [
+            {
+              "service": "사내검색",
+              "model_id": "claude-haiku",
+              "this_usd": "191.48",
+              "last_usd": "195.67",
+              "delta_usd": "-4.19",
+              "pct_or_new": "-2.1"
+            },
+            {
+              "service": "상담봇",
+              "model_id": "claude-sonnet",
+              "this_usd": "255.69",
+              "last_usd": "259.58",
+              "delta_usd": "-3.89",
+              "pct_or_new": "-1.5"
+            },
+            {
+              "service": "리포트",
+              "model_id": "nova-lite",
+              "this_usd": "2.09",
+              "last_usd": "5.46",
+              "delta_usd": "-3.37",
+              "pct_or_new": "-61.7"
+            }
+          ]
+        }
+      },
+      "mom_scoped": {
+        "increase": {
+          "team=고객지원팀": {
+            "service": [
+              {
+                "service": "상담봇",
+                "this_usd": "272.36",
+                "last_usd": "259.58",
+                "delta_usd": "12.78",
+                "pct_or_new": "4.9"
+              }
+            ],
+            "model_id": [
+              {
+                "model_id": "nova-pro",
+                "this_usd": "16.67",
+                "last_usd": "0.00",
+                "delta_usd": "16.67",
+                "pct_or_new": "신규"
+              },
+              {
+                "model_id": "nova-lite",
+                "this_usd": "8.95",
+                "last_usd": "8.70",
+                "delta_usd": "0.25",
+                "pct_or_new": "2.9"
+              }
+            ]
+          },
+          "team=검색플랫폼팀": {
+            "service": [
+              {
+                "service": "추천",
+                "this_usd": "390.02",
+                "last_usd": "206.72",
+                "delta_usd": "183.30",
+                "pct_or_new": "88.7"
+              }
+            ],
+            "model_id": [
+              {
+                "model_id": "claude-sonnet",
+                "this_usd": "274.13",
+                "last_usd": "89.73",
+                "delta_usd": "184.41",
+                "pct_or_new": "205.5"
+              },
+              {
+                "model_id": "nova-lite",
+                "this_usd": "8.22",
+                "last_usd": "8.22",
+                "delta_usd": "0.00",
+                "pct_or_new": "0.0"
+              }
+            ]
+          },
+          "team=마케팅팀": {
+            "service": [
+              {
+                "service": "카피생성",
+                "this_usd": "335.90",
+                "last_usd": "328.22",
+                "delta_usd": "7.67",
+                "pct_or_new": "2.3"
+              }
+            ],
+            "model_id": [
+              {
+                "model_id": "claude-sonnet",
+                "this_usd": "329.98",
+                "last_usd": "322.34",
+                "delta_usd": "7.64",
+                "pct_or_new": "2.4"
+              },
+              {
+                "model_id": "claude-haiku",
+                "this_usd": "58.46",
+                "last_usd": "57.49",
+                "delta_usd": "0.96",
+                "pct_or_new": "1.7"
+              }
+            ]
+          }
+        },
+        "decrease": {
+          "team=고객지원팀": {
+            "service": [
+              {
+                "service": "메일분류",
+                "this_usd": "396.24",
+                "last_usd": "396.61",
+                "delta_usd": "-0.37",
+                "pct_or_new": "-0.1"
+              }
+            ],
+            "model_id": [
+              {
+                "model_id": "claude-sonnet",
+                "this_usd": "642.98",
+                "last_usd": "647.49",
+                "delta_usd": "-4.52",
+                "pct_or_new": "-0.7"
+              }
+            ]
+          },
+          "team=검색플랫폼팀": {
+            "service": [
+              {
+                "service": "사내검색",
+                "this_usd": "199.70",
+                "last_usd": "203.88",
+                "delta_usd": "-4.18",
+                "pct_or_new": "-2.1"
+              }
+            ],
+            "model_id": [
+              {
+                "model_id": "claude-haiku",
+                "this_usd": "307.37",
+                "last_usd": "312.66",
+                "delta_usd": "-5.29",
+                "pct_or_new": "-1.7"
+              }
+            ]
+          },
+          "team=마케팅팀": {
+            "service": [
+              {
+                "service": "리포트",
+                "this_usd": "60.55",
+                "last_usd": "62.96",
+                "delta_usd": "-2.41",
+                "pct_or_new": "-3.8"
+              }
+            ],
+            "model_id": [
+              {
+                "model_id": "nova-lite",
+                "this_usd": "8.01",
+                "last_usd": "11.35",
+                "delta_usd": "-3.34",
+                "pct_or_new": "-29.4"
+              }
+            ]
+          }
+        }
+      }
     }
   },
   "panda-soft": {
@@ -236,183 +1193,189 @@
     "by_month": {
       "2026-09": {
         "team": {
-          "고객지원팀": "309.00",
-          "검색플랫폼팀": "125.71",
-          "마케팅팀": "239.91"
+          "고객지원팀": "176.55",
+          "검색플랫폼팀": "180.99",
+          "마케팅팀": "224.23"
         },
         "service": {
-          "상담봇": "101.69",
-          "메일분류": "207.31",
-          "사내검색": "11.55",
-          "추천": "114.16",
-          "카피생성": "223.55",
-          "리포트": "16.36"
+          "상담봇": "119.34",
+          "메일분류": "57.21",
+          "사내검색": "81.84",
+          "추천": "99.15",
+          "카피생성": "179.53",
+          "리포트": "44.69"
         },
         "feature": {
-          "FAQ응답": "53.33",
-          "상담요약": "48.36",
-          "문의분류": "1.03",
-          "답장초안": "206.28",
-          "문서요약": "9.21",
-          "질의재작성": "2.35",
-          "상품설명": "48.44",
-          "리뷰요약": "65.72",
-          "광고문구": "4.87",
-          "SNS게시물": "218.67",
-          "캠페인분석": "15.58",
-          "주간보고": "0.78"
+          "FAQ응답": "105.23",
+          "상담요약": "14.11",
+          "문의분류": "6.88",
+          "답장초안": "50.33",
+          "문서요약": "80.72",
+          "질의재작성": "1.12",
+          "상품설명": "81.85",
+          "리뷰요약": "17.30",
+          "광고문구": "5.73",
+          "SNS게시물": "173.81",
+          "캠페인분석": "39.56",
+          "주간보고": "5.13"
         },
         "model_id": {
-          "claude-haiku": "308.05",
-          "nova-pro": "138.87",
-          "nova-lite": "9.03",
-          "claude-sonnet": "218.67"
+          "claude-haiku": "237.41",
+          "nova-pro": "151.70",
+          "nova-lite": "18.85",
+          "claude-sonnet": "173.81"
         },
-        "total": "791.43",
-        "unattributed": "116.81",
-        "tagged": "674.62"
+        "total": "682.54",
+        "unattributed": "100.77",
+        "tagged": "581.77"
       },
       "2026-08": {
         "team": {
-          "고객지원팀": "169.23",
-          "검색플랫폼팀": "128.71",
-          "마케팅팀": "20.98"
+          "고객지원팀": "148.76",
+          "검색플랫폼팀": "179.19",
+          "마케팅팀": "50.99"
         },
         "service": {
-          "상담봇": "100.35",
-          "메일분류": "68.88",
-          "사내검색": "14.92",
-          "추천": "113.79",
-          "카피생성": "4.77",
-          "리포트": "16.21"
+          "상담봇": "124.61",
+          "메일분류": "24.15",
+          "사내검색": "81.43",
+          "추천": "97.77",
+          "카피생성": "5.70",
+          "리포트": "45.29"
         },
         "feature": {
-          "FAQ응답": "50.96",
-          "상담요약": "49.40",
-          "문의분류": "1.00",
-          "답장초안": "67.88",
-          "문서요약": "9.00",
-          "질의재작성": "5.92",
-          "상품설명": "48.41",
-          "리뷰요약": "65.38",
-          "광고문구": "4.77",
-          "캠페인분석": "15.39",
-          "주간보고": "0.81"
+          "FAQ응답": "110.35",
+          "상담요약": "14.27",
+          "문의분류": "7.10",
+          "답장초안": "17.05",
+          "문서요약": "78.71",
+          "질의재작성": "2.71",
+          "상품설명": "80.51",
+          "리뷰요약": "17.25",
+          "광고문구": "5.70",
+          "캠페인분석": "40.19",
+          "주간보고": "5.10"
         },
         "model_id": {
-          "claude-haiku": "167.24",
-          "nova-pro": "139.17",
-          "nova-lite": "12.50"
+          "claude-haiku": "207.91",
+          "nova-pro": "150.43",
+          "nova-lite": "20.61"
         },
-        "total": "375.72",
-        "unattributed": "56.80",
-        "tagged": "318.91"
+        "total": "444.85",
+        "unattributed": "65.91",
+        "tagged": "378.95"
       }
     },
     "drilldown_service_by_team": {
       "고객지원팀": {
-        "상담봇": "101.69",
-        "메일분류": "207.31"
+        "상담봇": "119.34",
+        "메일분류": "57.21"
       },
       "검색플랫폼팀": {
-        "사내검색": "11.55",
-        "추천": "114.16"
+        "사내검색": "81.84",
+        "추천": "99.15"
       },
       "마케팅팀": {
-        "카피생성": "223.55",
-        "리포트": "16.36"
+        "카피생성": "179.53",
+        "리포트": "44.69"
       }
     },
     "mom_increase": {
       "team": [
         {
           "key": "마케팅팀",
-          "this_usd": "239.91",
-          "last_usd": "20.98",
-          "delta_usd": "218.93",
-          "pct_or_new": "1043.8"
+          "this_usd": "224.23",
+          "last_usd": "50.99",
+          "delta_usd": "173.24",
+          "pct_or_new": "339.8"
         },
         {
           "key": "고객지원팀",
-          "this_usd": "309.00",
-          "last_usd": "169.23",
-          "delta_usd": "139.77",
-          "pct_or_new": "82.6"
+          "this_usd": "176.55",
+          "last_usd": "148.76",
+          "delta_usd": "27.79",
+          "pct_or_new": "18.7"
+        },
+        {
+          "key": "검색플랫폼팀",
+          "this_usd": "180.99",
+          "last_usd": "179.19",
+          "delta_usd": "1.79",
+          "pct_or_new": "1.0"
         }
       ],
       "service": [
         {
           "key": "카피생성",
-          "this_usd": "223.55",
-          "last_usd": "4.77",
-          "delta_usd": "218.78",
-          "pct_or_new": "4588.6"
+          "this_usd": "179.53",
+          "last_usd": "5.70",
+          "delta_usd": "173.84",
+          "pct_or_new": "3051.6"
         },
         {
           "key": "메일분류",
-          "this_usd": "207.31",
-          "last_usd": "68.88",
-          "delta_usd": "138.43",
-          "pct_or_new": "201.0"
+          "this_usd": "57.21",
+          "last_usd": "24.15",
+          "delta_usd": "33.06",
+          "pct_or_new": "136.9"
         },
         {
-          "key": "상담봇",
-          "this_usd": "101.69",
-          "last_usd": "100.35",
-          "delta_usd": "1.34",
-          "pct_or_new": "1.3"
+          "key": "추천",
+          "this_usd": "99.15",
+          "last_usd": "97.77",
+          "delta_usd": "1.38",
+          "pct_or_new": "1.4"
         }
       ],
       "model_id": [
         {
           "key": "claude-sonnet",
-          "this_usd": "218.67",
+          "this_usd": "173.81",
           "last_usd": "0.00",
-          "delta_usd": "218.67",
+          "delta_usd": "173.81",
           "pct_or_new": "신규"
         },
         {
           "key": "claude-haiku",
-          "this_usd": "308.05",
-          "last_usd": "167.24",
-          "delta_usd": "140.81",
-          "pct_or_new": "84.2"
+          "this_usd": "237.41",
+          "last_usd": "207.91",
+          "delta_usd": "29.51",
+          "pct_or_new": "14.2"
+        },
+        {
+          "key": "nova-pro",
+          "this_usd": "151.70",
+          "last_usd": "150.43",
+          "delta_usd": "1.27",
+          "pct_or_new": "0.8"
         }
       ]
     },
     "mom_decrease": {
-      "team": [
-        {
-          "key": "검색플랫폼팀",
-          "this_usd": "125.71",
-          "last_usd": "128.71",
-          "delta_usd": "-2.99",
-          "pct_or_new": "-2.3"
-        }
-      ],
+      "team": [],
       "service": [
         {
-          "key": "사내검색",
-          "this_usd": "11.55",
-          "last_usd": "14.92",
-          "delta_usd": "-3.37",
-          "pct_or_new": "-22.6"
+          "key": "상담봇",
+          "this_usd": "119.34",
+          "last_usd": "124.61",
+          "delta_usd": "-5.27",
+          "pct_or_new": "-4.2"
+        },
+        {
+          "key": "리포트",
+          "this_usd": "44.69",
+          "last_usd": "45.29",
+          "delta_usd": "-0.60",
+          "pct_or_new": "-1.3"
         }
       ],
       "model_id": [
         {
           "key": "nova-lite",
-          "this_usd": "9.03",
-          "last_usd": "12.50",
-          "delta_usd": "-3.47",
-          "pct_or_new": "-27.7"
-        },
-        {
-          "key": "nova-pro",
-          "this_usd": "138.87",
-          "last_usd": "139.17",
-          "delta_usd": "-0.31",
-          "pct_or_new": "-0.2"
+          "this_usd": "18.85",
+          "last_usd": "20.61",
+          "delta_usd": "-1.76",
+          "pct_or_new": "-8.5"
         }
       ]
     },
@@ -422,11 +1385,11 @@
         "y": "claude-haiku",
         "month": "2026-09",
         "scope": "tenant",
-        "input_tokens": 30760522,
-        "output_tokens": 8425991,
-        "before_usd": "218.67",
-        "after_usd": "72.89",
-        "saving_usd": "145.78",
+        "input_tokens": 27981550,
+        "output_tokens": 5990725,
+        "before_usd": "173.81",
+        "after_usd": "57.94",
+        "saving_usd": "115.87",
         "kind": "saving"
       },
       {
@@ -434,11 +1397,11 @@
         "y": "claude-sonnet",
         "month": "2026-09",
         "scope": "tenant",
-        "input_tokens": 118253082,
-        "output_tokens": 44882013,
-        "before_usd": "342.66",
-        "after_usd": "1027.99",
-        "saving_usd": "-685.33",
+        "input_tokens": 111610602,
+        "output_tokens": 31830414,
+        "before_usd": "270.76",
+        "after_usd": "812.29",
+        "saving_usd": "-541.53",
         "kind": "increase"
       }
     ],
@@ -447,6 +1410,955 @@
       "decline": "질의재작성",
       "new": "SNS게시물",
       "new_model": "claude-sonnet"
+    },
+    "multi": {
+      "cross": {
+        "2026-09": {
+          "team,service": [
+            {
+              "team": "검색플랫폼팀",
+              "service": "사내검색",
+              "usd": "81.84"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "service": "추천",
+              "usd": "99.15"
+            },
+            {
+              "team": "고객지원팀",
+              "service": "메일분류",
+              "usd": "57.21"
+            },
+            {
+              "team": "고객지원팀",
+              "service": "상담봇",
+              "usd": "119.34"
+            },
+            {
+              "team": "마케팅팀",
+              "service": "리포트",
+              "usd": "44.69"
+            },
+            {
+              "team": "마케팅팀",
+              "service": "카피생성",
+              "usd": "179.53"
+            }
+          ],
+          "team,feature": [
+            {
+              "team": "검색플랫폼팀",
+              "feature": "리뷰요약",
+              "usd": "17.30"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "feature": "문서요약",
+              "usd": "80.72"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "feature": "상품설명",
+              "usd": "81.85"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "feature": "질의재작성",
+              "usd": "1.12"
+            },
+            {
+              "team": "고객지원팀",
+              "feature": "FAQ응답",
+              "usd": "105.23"
+            },
+            {
+              "team": "고객지원팀",
+              "feature": "답장초안",
+              "usd": "50.33"
+            },
+            {
+              "team": "고객지원팀",
+              "feature": "문의분류",
+              "usd": "6.88"
+            },
+            {
+              "team": "고객지원팀",
+              "feature": "상담요약",
+              "usd": "14.11"
+            },
+            {
+              "team": "마케팅팀",
+              "feature": "SNS게시물",
+              "usd": "173.81"
+            },
+            {
+              "team": "마케팅팀",
+              "feature": "광고문구",
+              "usd": "5.73"
+            },
+            {
+              "team": "마케팅팀",
+              "feature": "주간보고",
+              "usd": "5.13"
+            },
+            {
+              "team": "마케팅팀",
+              "feature": "캠페인분석",
+              "usd": "39.56"
+            }
+          ],
+          "team,model_id": [
+            {
+              "team": "검색플랫폼팀",
+              "model_id": "claude-haiku",
+              "usd": "81.85"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "model_id": "nova-lite",
+              "usd": "1.12"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "model_id": "nova-pro",
+              "usd": "98.02"
+            },
+            {
+              "team": "고객지원팀",
+              "model_id": "claude-haiku",
+              "usd": "155.57"
+            },
+            {
+              "team": "고객지원팀",
+              "model_id": "nova-lite",
+              "usd": "6.88"
+            },
+            {
+              "team": "고객지원팀",
+              "model_id": "nova-pro",
+              "usd": "14.11"
+            },
+            {
+              "team": "마케팅팀",
+              "model_id": "claude-sonnet",
+              "usd": "173.81"
+            },
+            {
+              "team": "마케팅팀",
+              "model_id": "nova-lite",
+              "usd": "10.86"
+            },
+            {
+              "team": "마케팅팀",
+              "model_id": "nova-pro",
+              "usd": "39.56"
+            }
+          ],
+          "service,feature": [
+            {
+              "service": "리포트",
+              "feature": "주간보고",
+              "usd": "5.13"
+            },
+            {
+              "service": "리포트",
+              "feature": "캠페인분석",
+              "usd": "39.56"
+            },
+            {
+              "service": "메일분류",
+              "feature": "답장초안",
+              "usd": "50.33"
+            },
+            {
+              "service": "메일분류",
+              "feature": "문의분류",
+              "usd": "6.88"
+            },
+            {
+              "service": "사내검색",
+              "feature": "문서요약",
+              "usd": "80.72"
+            },
+            {
+              "service": "사내검색",
+              "feature": "질의재작성",
+              "usd": "1.12"
+            },
+            {
+              "service": "상담봇",
+              "feature": "FAQ응답",
+              "usd": "105.23"
+            },
+            {
+              "service": "상담봇",
+              "feature": "상담요약",
+              "usd": "14.11"
+            },
+            {
+              "service": "추천",
+              "feature": "리뷰요약",
+              "usd": "17.30"
+            },
+            {
+              "service": "추천",
+              "feature": "상품설명",
+              "usd": "81.85"
+            },
+            {
+              "service": "카피생성",
+              "feature": "SNS게시물",
+              "usd": "173.81"
+            },
+            {
+              "service": "카피생성",
+              "feature": "광고문구",
+              "usd": "5.73"
+            }
+          ],
+          "service,model_id": [
+            {
+              "service": "리포트",
+              "model_id": "nova-lite",
+              "usd": "5.13"
+            },
+            {
+              "service": "리포트",
+              "model_id": "nova-pro",
+              "usd": "39.56"
+            },
+            {
+              "service": "메일분류",
+              "model_id": "claude-haiku",
+              "usd": "50.33"
+            },
+            {
+              "service": "메일분류",
+              "model_id": "nova-lite",
+              "usd": "6.88"
+            },
+            {
+              "service": "사내검색",
+              "model_id": "nova-lite",
+              "usd": "1.12"
+            },
+            {
+              "service": "사내검색",
+              "model_id": "nova-pro",
+              "usd": "80.72"
+            },
+            {
+              "service": "상담봇",
+              "model_id": "claude-haiku",
+              "usd": "105.23"
+            },
+            {
+              "service": "상담봇",
+              "model_id": "nova-pro",
+              "usd": "14.11"
+            },
+            {
+              "service": "추천",
+              "model_id": "claude-haiku",
+              "usd": "81.85"
+            },
+            {
+              "service": "추천",
+              "model_id": "nova-pro",
+              "usd": "17.30"
+            },
+            {
+              "service": "카피생성",
+              "model_id": "claude-sonnet",
+              "usd": "173.81"
+            },
+            {
+              "service": "카피생성",
+              "model_id": "nova-lite",
+              "usd": "5.73"
+            }
+          ],
+          "feature,model_id": [
+            {
+              "feature": "FAQ응답",
+              "model_id": "claude-haiku",
+              "usd": "105.23"
+            },
+            {
+              "feature": "SNS게시물",
+              "model_id": "claude-sonnet",
+              "usd": "173.81"
+            },
+            {
+              "feature": "광고문구",
+              "model_id": "nova-lite",
+              "usd": "5.73"
+            },
+            {
+              "feature": "답장초안",
+              "model_id": "claude-haiku",
+              "usd": "50.33"
+            },
+            {
+              "feature": "리뷰요약",
+              "model_id": "nova-pro",
+              "usd": "17.30"
+            },
+            {
+              "feature": "문서요약",
+              "model_id": "nova-pro",
+              "usd": "80.72"
+            },
+            {
+              "feature": "문의분류",
+              "model_id": "nova-lite",
+              "usd": "6.88"
+            },
+            {
+              "feature": "상담요약",
+              "model_id": "nova-pro",
+              "usd": "14.11"
+            },
+            {
+              "feature": "상품설명",
+              "model_id": "claude-haiku",
+              "usd": "81.85"
+            },
+            {
+              "feature": "주간보고",
+              "model_id": "nova-lite",
+              "usd": "5.13"
+            },
+            {
+              "feature": "질의재작성",
+              "model_id": "nova-lite",
+              "usd": "1.12"
+            },
+            {
+              "feature": "캠페인분석",
+              "model_id": "nova-pro",
+              "usd": "39.56"
+            }
+          ]
+        },
+        "2026-08": {
+          "team,service": [
+            {
+              "team": "검색플랫폼팀",
+              "service": "사내검색",
+              "usd": "81.43"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "service": "추천",
+              "usd": "97.77"
+            },
+            {
+              "team": "고객지원팀",
+              "service": "메일분류",
+              "usd": "24.15"
+            },
+            {
+              "team": "고객지원팀",
+              "service": "상담봇",
+              "usd": "124.61"
+            },
+            {
+              "team": "마케팅팀",
+              "service": "리포트",
+              "usd": "45.29"
+            },
+            {
+              "team": "마케팅팀",
+              "service": "카피생성",
+              "usd": "5.70"
+            }
+          ],
+          "team,feature": [
+            {
+              "team": "검색플랫폼팀",
+              "feature": "리뷰요약",
+              "usd": "17.25"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "feature": "문서요약",
+              "usd": "78.71"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "feature": "상품설명",
+              "usd": "80.51"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "feature": "질의재작성",
+              "usd": "2.71"
+            },
+            {
+              "team": "고객지원팀",
+              "feature": "FAQ응답",
+              "usd": "110.35"
+            },
+            {
+              "team": "고객지원팀",
+              "feature": "답장초안",
+              "usd": "17.05"
+            },
+            {
+              "team": "고객지원팀",
+              "feature": "문의분류",
+              "usd": "7.10"
+            },
+            {
+              "team": "고객지원팀",
+              "feature": "상담요약",
+              "usd": "14.27"
+            },
+            {
+              "team": "마케팅팀",
+              "feature": "광고문구",
+              "usd": "5.70"
+            },
+            {
+              "team": "마케팅팀",
+              "feature": "주간보고",
+              "usd": "5.10"
+            },
+            {
+              "team": "마케팅팀",
+              "feature": "캠페인분석",
+              "usd": "40.19"
+            }
+          ],
+          "team,model_id": [
+            {
+              "team": "검색플랫폼팀",
+              "model_id": "claude-haiku",
+              "usd": "80.51"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "model_id": "nova-lite",
+              "usd": "2.71"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "model_id": "nova-pro",
+              "usd": "95.97"
+            },
+            {
+              "team": "고객지원팀",
+              "model_id": "claude-haiku",
+              "usd": "127.40"
+            },
+            {
+              "team": "고객지원팀",
+              "model_id": "nova-lite",
+              "usd": "7.10"
+            },
+            {
+              "team": "고객지원팀",
+              "model_id": "nova-pro",
+              "usd": "14.27"
+            },
+            {
+              "team": "마케팅팀",
+              "model_id": "nova-lite",
+              "usd": "10.80"
+            },
+            {
+              "team": "마케팅팀",
+              "model_id": "nova-pro",
+              "usd": "40.19"
+            }
+          ],
+          "service,feature": [
+            {
+              "service": "리포트",
+              "feature": "주간보고",
+              "usd": "5.10"
+            },
+            {
+              "service": "리포트",
+              "feature": "캠페인분석",
+              "usd": "40.19"
+            },
+            {
+              "service": "메일분류",
+              "feature": "답장초안",
+              "usd": "17.05"
+            },
+            {
+              "service": "메일분류",
+              "feature": "문의분류",
+              "usd": "7.10"
+            },
+            {
+              "service": "사내검색",
+              "feature": "문서요약",
+              "usd": "78.71"
+            },
+            {
+              "service": "사내검색",
+              "feature": "질의재작성",
+              "usd": "2.71"
+            },
+            {
+              "service": "상담봇",
+              "feature": "FAQ응답",
+              "usd": "110.35"
+            },
+            {
+              "service": "상담봇",
+              "feature": "상담요약",
+              "usd": "14.27"
+            },
+            {
+              "service": "추천",
+              "feature": "리뷰요약",
+              "usd": "17.25"
+            },
+            {
+              "service": "추천",
+              "feature": "상품설명",
+              "usd": "80.51"
+            },
+            {
+              "service": "카피생성",
+              "feature": "광고문구",
+              "usd": "5.70"
+            }
+          ],
+          "service,model_id": [
+            {
+              "service": "리포트",
+              "model_id": "nova-lite",
+              "usd": "5.10"
+            },
+            {
+              "service": "리포트",
+              "model_id": "nova-pro",
+              "usd": "40.19"
+            },
+            {
+              "service": "메일분류",
+              "model_id": "claude-haiku",
+              "usd": "17.05"
+            },
+            {
+              "service": "메일분류",
+              "model_id": "nova-lite",
+              "usd": "7.10"
+            },
+            {
+              "service": "사내검색",
+              "model_id": "nova-lite",
+              "usd": "2.71"
+            },
+            {
+              "service": "사내검색",
+              "model_id": "nova-pro",
+              "usd": "78.71"
+            },
+            {
+              "service": "상담봇",
+              "model_id": "claude-haiku",
+              "usd": "110.35"
+            },
+            {
+              "service": "상담봇",
+              "model_id": "nova-pro",
+              "usd": "14.27"
+            },
+            {
+              "service": "추천",
+              "model_id": "claude-haiku",
+              "usd": "80.51"
+            },
+            {
+              "service": "추천",
+              "model_id": "nova-pro",
+              "usd": "17.25"
+            },
+            {
+              "service": "카피생성",
+              "model_id": "nova-lite",
+              "usd": "5.70"
+            }
+          ],
+          "feature,model_id": [
+            {
+              "feature": "FAQ응답",
+              "model_id": "claude-haiku",
+              "usd": "110.35"
+            },
+            {
+              "feature": "광고문구",
+              "model_id": "nova-lite",
+              "usd": "5.70"
+            },
+            {
+              "feature": "답장초안",
+              "model_id": "claude-haiku",
+              "usd": "17.05"
+            },
+            {
+              "feature": "리뷰요약",
+              "model_id": "nova-pro",
+              "usd": "17.25"
+            },
+            {
+              "feature": "문서요약",
+              "model_id": "nova-pro",
+              "usd": "78.71"
+            },
+            {
+              "feature": "문의분류",
+              "model_id": "nova-lite",
+              "usd": "7.10"
+            },
+            {
+              "feature": "상담요약",
+              "model_id": "nova-pro",
+              "usd": "14.27"
+            },
+            {
+              "feature": "상품설명",
+              "model_id": "claude-haiku",
+              "usd": "80.51"
+            },
+            {
+              "feature": "주간보고",
+              "model_id": "nova-lite",
+              "usd": "5.10"
+            },
+            {
+              "feature": "질의재작성",
+              "model_id": "nova-lite",
+              "usd": "2.71"
+            },
+            {
+              "feature": "캠페인분석",
+              "model_id": "nova-pro",
+              "usd": "40.19"
+            }
+          ]
+        }
+      },
+      "unattributed_by_model": {
+        "2026-09": {
+          "claude-haiku": "33.35",
+          "nova-lite": "37.18",
+          "nova-pro": "30.25"
+        },
+        "2026-08": {
+          "claude-haiku": "24.48",
+          "nova-lite": "18.39",
+          "nova-pro": "23.03"
+        }
+      },
+      "mom_cross": {
+        "increase": {
+          "team,service": [
+            {
+              "team": "마케팅팀",
+              "service": "카피생성",
+              "this_usd": "179.53",
+              "last_usd": "5.70",
+              "delta_usd": "173.84",
+              "pct_or_new": "3051.6"
+            },
+            {
+              "team": "고객지원팀",
+              "service": "메일분류",
+              "this_usd": "57.21",
+              "last_usd": "24.15",
+              "delta_usd": "33.06",
+              "pct_or_new": "136.9"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "service": "추천",
+              "this_usd": "99.15",
+              "last_usd": "97.77",
+              "delta_usd": "1.38",
+              "pct_or_new": "1.4"
+            }
+          ],
+          "team,model_id": [
+            {
+              "team": "마케팅팀",
+              "model_id": "claude-sonnet",
+              "this_usd": "173.81",
+              "last_usd": "0.00",
+              "delta_usd": "173.81",
+              "pct_or_new": "신규"
+            },
+            {
+              "team": "고객지원팀",
+              "model_id": "claude-haiku",
+              "this_usd": "155.57",
+              "last_usd": "127.40",
+              "delta_usd": "28.17",
+              "pct_or_new": "22.1"
+            },
+            {
+              "team": "검색플랫폼팀",
+              "model_id": "nova-pro",
+              "this_usd": "98.02",
+              "last_usd": "95.97",
+              "delta_usd": "2.05",
+              "pct_or_new": "2.1"
+            }
+          ],
+          "service,model_id": [
+            {
+              "service": "카피생성",
+              "model_id": "claude-sonnet",
+              "this_usd": "173.81",
+              "last_usd": "0.00",
+              "delta_usd": "173.81",
+              "pct_or_new": "신규"
+            },
+            {
+              "service": "메일분류",
+              "model_id": "claude-haiku",
+              "this_usd": "50.33",
+              "last_usd": "17.05",
+              "delta_usd": "33.28",
+              "pct_or_new": "195.2"
+            },
+            {
+              "service": "사내검색",
+              "model_id": "nova-pro",
+              "this_usd": "80.72",
+              "last_usd": "78.71",
+              "delta_usd": "2.01",
+              "pct_or_new": "2.6"
+            }
+          ]
+        },
+        "decrease": {
+          "team,service": [
+            {
+              "team": "고객지원팀",
+              "service": "상담봇",
+              "this_usd": "119.34",
+              "last_usd": "124.61",
+              "delta_usd": "-5.27",
+              "pct_or_new": "-4.2"
+            },
+            {
+              "team": "마케팅팀",
+              "service": "리포트",
+              "this_usd": "44.69",
+              "last_usd": "45.29",
+              "delta_usd": "-0.60",
+              "pct_or_new": "-1.3"
+            }
+          ],
+          "team,model_id": [
+            {
+              "team": "검색플랫폼팀",
+              "model_id": "nova-lite",
+              "this_usd": "1.12",
+              "last_usd": "2.71",
+              "delta_usd": "-1.60",
+              "pct_or_new": "-58.8"
+            },
+            {
+              "team": "마케팅팀",
+              "model_id": "nova-pro",
+              "this_usd": "39.56",
+              "last_usd": "40.19",
+              "delta_usd": "-0.63",
+              "pct_or_new": "-1.6"
+            },
+            {
+              "team": "고객지원팀",
+              "model_id": "nova-lite",
+              "this_usd": "6.88",
+              "last_usd": "7.10",
+              "delta_usd": "-0.22",
+              "pct_or_new": "-3.1"
+            }
+          ],
+          "service,model_id": [
+            {
+              "service": "상담봇",
+              "model_id": "claude-haiku",
+              "this_usd": "105.23",
+              "last_usd": "110.35",
+              "delta_usd": "-5.12",
+              "pct_or_new": "-4.6"
+            },
+            {
+              "service": "사내검색",
+              "model_id": "nova-lite",
+              "this_usd": "1.12",
+              "last_usd": "2.71",
+              "delta_usd": "-1.60",
+              "pct_or_new": "-58.8"
+            },
+            {
+              "service": "리포트",
+              "model_id": "nova-pro",
+              "this_usd": "39.56",
+              "last_usd": "40.19",
+              "delta_usd": "-0.63",
+              "pct_or_new": "-1.6"
+            }
+          ]
+        }
+      },
+      "mom_scoped": {
+        "increase": {
+          "team=고객지원팀": {
+            "service": [
+              {
+                "service": "메일분류",
+                "this_usd": "57.21",
+                "last_usd": "24.15",
+                "delta_usd": "33.06",
+                "pct_or_new": "136.9"
+              }
+            ],
+            "model_id": [
+              {
+                "model_id": "claude-haiku",
+                "this_usd": "155.57",
+                "last_usd": "127.40",
+                "delta_usd": "28.17",
+                "pct_or_new": "22.1"
+              }
+            ]
+          },
+          "team=검색플랫폼팀": {
+            "service": [
+              {
+                "service": "추천",
+                "this_usd": "99.15",
+                "last_usd": "97.77",
+                "delta_usd": "1.38",
+                "pct_or_new": "1.4"
+              },
+              {
+                "service": "사내검색",
+                "this_usd": "81.84",
+                "last_usd": "81.43",
+                "delta_usd": "0.41",
+                "pct_or_new": "0.5"
+              }
+            ],
+            "model_id": [
+              {
+                "model_id": "nova-pro",
+                "this_usd": "98.02",
+                "last_usd": "95.97",
+                "delta_usd": "2.05",
+                "pct_or_new": "2.1"
+              },
+              {
+                "model_id": "claude-haiku",
+                "this_usd": "81.85",
+                "last_usd": "80.51",
+                "delta_usd": "1.34",
+                "pct_or_new": "1.7"
+              }
+            ]
+          },
+          "team=마케팅팀": {
+            "service": [
+              {
+                "service": "카피생성",
+                "this_usd": "179.53",
+                "last_usd": "5.70",
+                "delta_usd": "173.84",
+                "pct_or_new": "3051.6"
+              }
+            ],
+            "model_id": [
+              {
+                "model_id": "claude-sonnet",
+                "this_usd": "173.81",
+                "last_usd": "0.00",
+                "delta_usd": "173.81",
+                "pct_or_new": "신규"
+              },
+              {
+                "model_id": "nova-lite",
+                "this_usd": "10.86",
+                "last_usd": "10.80",
+                "delta_usd": "0.06",
+                "pct_or_new": "0.6"
+              }
+            ]
+          }
+        },
+        "decrease": {
+          "team=고객지원팀": {
+            "service": [
+              {
+                "service": "상담봇",
+                "this_usd": "119.34",
+                "last_usd": "124.61",
+                "delta_usd": "-5.27",
+                "pct_or_new": "-4.2"
+              }
+            ],
+            "model_id": [
+              {
+                "model_id": "nova-lite",
+                "this_usd": "6.88",
+                "last_usd": "7.10",
+                "delta_usd": "-0.22",
+                "pct_or_new": "-3.1"
+              },
+              {
+                "model_id": "nova-pro",
+                "this_usd": "14.11",
+                "last_usd": "14.27",
+                "delta_usd": "-0.16",
+                "pct_or_new": "-1.1"
+              }
+            ]
+          },
+          "team=검색플랫폼팀": {
+            "service": [],
+            "model_id": [
+              {
+                "model_id": "nova-lite",
+                "this_usd": "1.12",
+                "last_usd": "2.71",
+                "delta_usd": "-1.60",
+                "pct_or_new": "-58.8"
+              }
+            ]
+          },
+          "team=마케팅팀": {
+            "service": [
+              {
+                "service": "리포트",
+                "this_usd": "44.69",
+                "last_usd": "45.29",
+                "delta_usd": "-0.60",
+                "pct_or_new": "-1.3"
+              }
+            ],
+            "model_id": [
+              {
+                "model_id": "nova-pro",
+                "this_usd": "39.56",
+                "last_usd": "40.19",
+                "delta_usd": "-0.63",
+                "pct_or_new": "-1.6"
+              }
+            ]
+          }
+        }
+      }
     }
   }
 }

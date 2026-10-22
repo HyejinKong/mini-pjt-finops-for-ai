@@ -10,6 +10,7 @@
 import csv
 import json
 import random
+from itertools import combinations
 from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
@@ -177,6 +178,28 @@ def sums(rows, cents, month, key, **filters):
     return out
 
 
+def cross_sums(rows, cents, month, keys, **filters):
+    """month 행을 두 기준(keys) 조합별로 합산한다(1e-8 USD). 미귀속 행은 제외한다."""
+    out = {}
+    for r in rows:
+        if not r["date"].startswith(month) or not r["team"]:
+            continue
+        if any(r[k] != v for k, v in filters.items()):
+            continue
+        cell = tuple(r[k] for k in keys)
+        out[cell] = out.get(cell, 0) + row_cost_e8(r, cents)
+    return out
+
+
+def unattributed_by_model(rows, cents, month):
+    """month 의 미귀속 비용을 모델별로 나눈다(1e-8 USD). 팀·서비스·기능에는 배분하지 않는다."""
+    out = {}
+    for r in rows:
+        if r["date"].startswith(month) and not r["team"]:
+            out[r["model_id"]] = out.get(r["model_id"], 0) + row_cost_e8(r, cents)
+    return out
+
+
 def unattributed(rows, cents, month):
     """month 의 미귀속 비용 합계(1e-8 USD)."""
     return sum(row_cost_e8(r, cents) for r in rows if r["date"].startswith(month) and not r["team"])
@@ -210,6 +233,40 @@ def mom(rows, cents, key, direction):
     for i in items:
         del i["_d"]
     return items[:3]
+
+
+def mom_multi(rows, cents, keys, direction, **filters):
+    """두 기준 조합 또는 범위를 좁힌 전월 대비 상위 3개. 항목은 기준 이름을 필드로 갖는다."""
+    this = cross_sums(rows, cents, THIS_MONTH, keys, **filters)
+    last = cross_sums(rows, cents, LAST_MONTH, keys, **filters)
+    items = []
+    for cell in sorted(set(this) | set(last)):
+        d = this.get(cell, 0) - last.get(cell, 0)
+        if (direction == "increase" and d > 0) or (direction == "decrease" and d < 0):
+            items.append({**dict(zip(keys, cell)), "this_usd": usd(this.get(cell, 0)), "last_usd": usd(last.get(cell, 0)),
+                          "delta_usd": usd(d), "pct_or_new": pct(d, last.get(cell, 0)), "_d": d})
+    items.sort(key=lambda x: x["_d"], reverse=(direction == "increase"))
+    for i in items:
+        del i["_d"]
+    return items[:3]
+
+
+def multi_dimension_expected(rows, cents):
+    """멀티 디멘전 집계(묶음 6)의 정답값: 두 기준 교차 합계, 미귀속 모델별, 범위·조합 전월 대비."""
+    pairs = list(combinations(("team", "service", "feature", "model_id"), 2))
+    cross = {
+        m: {f"{a},{b}": [{a: ca, b: cb, "usd": usd(v)} for (ca, cb), v in sorted(cross_sums(rows, cents, m, (a, b)).items())]
+            for a, b in pairs}
+        for m in (THIS_MONTH, LAST_MONTH)
+    }
+    un_model = {m: {k: usd(v) for k, v in sorted(unattributed_by_model(rows, cents, m).items())} for m in (THIS_MONTH, LAST_MONTH)}
+    mom_pairs = list(combinations(("team", "service", "model_id"), 2))
+    mom_cross = {d: {f"{a},{b}": mom_multi(rows, cents, (a, b), d) for a, b in mom_pairs} for d in ("increase", "decrease")}
+    mom_scoped = {
+        d: {f"team={t}": {k: mom_multi(rows, cents, (k,), d, team=t) for k in ("service", "model_id")} for t in HIERARCHY}
+        for d in ("increase", "decrease")
+    }
+    return {"cross": cross, "unattributed_by_model": un_model, "mom_cross": mom_cross, "mom_scoped": mom_scoped}
 
 
 def whatif(rows, cents, x, y, month=THIS_MONTH):
@@ -253,6 +310,7 @@ def expected_for(tenant, rows, cents):
         "mom_decrease": {k: mom(rows, cents, k, "decrease") for k in ("team", "service", "model_id")},
         "whatif": [whatif(rows, cents, swap_x, "claude-haiku"), whatif(rows, cents, "claude-haiku", "claude-sonnet")],
         "patterns": {k: pat[k] for k in ("spike", "decline", "new", "new_model")},
+        "multi": multi_dimension_expected(rows, cents),
     }
 
 
@@ -275,7 +333,7 @@ def all_amounts(exp):
             if d != 0 and "." in v and len(v.split(".")[1]) == 2:
                 found.add(str(abs(d)))
 
-    walk({k: exp[k] for k in ("by_month", "drilldown_service_by_team", "mom_increase", "mom_decrease", "whatif")})
+    walk({k: exp[k] for k in ("by_month", "drilldown_service_by_team", "mom_increase", "mom_decrease", "whatif", "multi")})
     return found
 
 
@@ -342,9 +400,9 @@ def write_test_queries(exp):
         ("q02", "positive", "고객지원팀 서비스별 9월 비용은?",
          [money_from(v) for v in hbe["drilldown_service_by_team"]["고객지원팀"].values()],
          forbid(pds), "get_cost_breakdown", "팀 > 서비스 드릴다운", "hbe-dev-01"),
-        ("q03", "positive", "9월 모델별 비용 알려줘",
-         [money_from(v) for v in pds["by_month"][THIS_MONTH]["model_id"].values()],
-         forbid(hbe), "get_cost_breakdown", "모델별 집계", "pds-lead-01"),
+        ("q03", "positive", "9월 팀별·모델별 비용 표로 보여줘",
+         [money_from(c["usd"]) for c in pds["multi"]["cross"][THIS_MONTH]["team,model_id"]],
+         forbid(hbe), "get_cost_breakdown", "팀 × 모델 교차 표, 소계·합계는 도구 값", "pds-lead-01"),
         ("q04", "positive", "지난달 대비 이번 달 팀별 비용이 왜 늘었어?",
          [money_from(i["delta_usd"]) for i in pds["mom_increase"]["team"]],
          forbid(hbe), "get_mom_change", "증가액 상위, 업무상 이유 추측 금지", "pds-dev-02"),
