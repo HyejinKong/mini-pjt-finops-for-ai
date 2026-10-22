@@ -136,3 +136,12 @@ def test_unknown_month_or_scope_400(client, params):
     r = client.get("/dashboard/data", params=params, headers=bearer(HBE_TOKEN))
     assert r.status_code == 400
     assert "rows" not in r.text
+
+
+def test_dashboard_page_has_no_secrets_and_no_html_injection(client):
+    r = client.get("/dashboard")
+    assert r.status_code == 200 and "text/html" in r.headers["content-type"]
+    assert HBE_TOKEN not in r.text and PDS_TOKEN not in r.text
+    assert 'fetch("/dashboard/data?' in r.text
+    # 응답 값은 textContent 로만 넣는다(innerHTML 을 쓰지 않는다)
+    assert "innerHTML" not in r.text
