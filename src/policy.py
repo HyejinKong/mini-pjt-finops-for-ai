@@ -29,7 +29,7 @@ REFUSALS = {
 
 SECRET_PATTERN = re.compile(
     r"시스템\s*프롬프트|system\s*prompt|비밀\s*키|비밀\s*값|secret|api\s*키|api\s*key|환경\s*변수|"
-    r"jwt|토큰\s*값|이전\s*지시|지시(를|는)?\s*무시|ignore\s+(all\s+)?previous",
+    r"jwt|토큰\s*값|접속\s*토큰|인증\s*토큰|access\s*token|이전\s*지시|지시(를|는)?\s*무시|ignore\s+(all\s+)?previous",
     re.IGNORECASE,
 )
 WRITE_PATTERN = re.compile(

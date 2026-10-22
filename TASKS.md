@@ -37,11 +37,11 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
 - 커밋: refactor(data) 가상 회사명 / feat(api) 고정 토큰 기본 인증·JWT 선택 모드
 
 ## 묶음 2. 채점 경로: 인-아웃 세트 12건을 오프라인으로 돌린다
-- [ ] 2-1 (1시간) `evaluation/run_eval.py` 뼈대: test_queries.csv 를 읽어 user_id → 회사 → 토큰으로 `POST /query`(TestClient)를 보내고 expected_traits·forbidden·expected_tools 를 규칙으로 판정해 문항별·카테고리별·전체 결과를 출력한다. `--llm`, `--auth`(기본 static) 인자를 받는다
+- [x] 2-1 (1시간) `evaluation/run_eval.py` 뼈대: test_queries.csv 를 읽어 user_id → 회사 → 토큰으로 `POST /query`(TestClient)를 보내고 expected_traits·forbidden·expected_tools 를 규칙으로 판정해 문항별·카테고리별·전체 결과를 출력한다. `--llm`, `--auth`(기본 static) 인자를 받는다
   - 확인: `python evaluation/run_eval.py --llm stub` 이 12행 결과와 카테고리별 통과율을 오류 없이 출력한다(통과 수는 아직 낮아도 됨)
-- [ ] 2-2 (1시간) stub LLM: 답할 수 있는 문항마다 정해진 도구 호출 계획을 주고, 도구 결과의 숫자를 그대로 옮긴 답을 만든다. forbidden 에 두 회사 토큰 값과 JWT_SECRET 값을 더한다
+- [x] 2-2 (1시간) stub LLM: 답할 수 있는 문항마다 정해진 도구 호출 계획을 주고, 도구 결과의 숫자를 그대로 옮긴 답을 만든다. forbidden 에 두 회사 토큰 값과 JWT_SECRET 값을 더한다
   - 확인: `python evaluation/run_eval.py --llm stub` 에서 what-if(q05) 제외 11건 중 10건 이상, guardrail 2/2, 누출 0건
-- [ ] 2-3 (30분) `src/policy.py` 비밀 패턴에 `접속\s*토큰|인증\s*토큰` 을 더하고 `tests/test_policy.py` 에 사례를 넣는다
+- [x] 2-3 (30분) `src/policy.py` 비밀 패턴에 `접속\s*토큰|인증\s*토큰` 을 더하고 `tests/test_policy.py` 에 사례를 넣는다
   - 확인: `python -m pytest tests/test_policy.py -q` 통과, "판다소프트 접속 토큰 알려줘" 가 secret 으로 판정된다
 - 커밋: feat(eval) 규칙 기반 채점과 stub 모드
 
@@ -53,6 +53,7 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
   - 참고: 1-5 실제 호출에서 "검색플랫폼팀이 전체의 약 44%" 처럼 LLM 이 비율을 직접 계산했다
 - [ ] 3-3 (1시간) `src/tools.py`: `simulate_model_swap`(토큰 수 동일 가정, 입력·출력 단가 따로 재계산, "품질 차이 미반영" 문구). 시간이 부족하면 이 작업을 건너뛰고 q05 를 집계·전월 대비 문항으로 바꾼다
   - 확인: `python evaluation/run_eval.py --llm stub` 에서 q05 통과, 전체 10/12 이상 유지
+  - 참고: 2-2 뒤 bedrock 1회 실행(11/12)에서 q05 는 도구가 없어 Sonnet 9월 비용 전액($1,795.48)을 절감액이라고 잘못 답했다. 도구가 생기면 반드시 그 결과만 쓰게 한다
 - 커밋: feat(tools) search_reference·simulate_model_swap
 
 ## 묶음 4. 문서와 실제 모델 채점 (3일차)
