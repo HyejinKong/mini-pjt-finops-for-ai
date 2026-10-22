@@ -101,8 +101,9 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
 - [x] 6-2 (1시간) `src/tools.py` `get_cost_breakdown(group_by: list, month, team, service)`: 행은 기준 이름을 필드로 갖고(`{"team": .., "model": .., "usd": .., "krw": ..}`), 두 기준이면 `subtotals`(기준별 소계)를 더한다. `total`·`tagged_total`·`unattributed` 는 지금 의미 그대로이고, model 이 기준에 있으면 `unattributed.by_model` 을 더한다. `src/agent.py` 프롬프트(교차 표 질문은 두 기준 한 번 호출, 합계·소계는 도구 값만), `evaluation/run_eval.py` stub 계획·답변(새 q03 은 `group_by=["team","model"]` 한 번 호출), 기존 테스트를 새 형식으로 고친다
   - 확인: `python -m pytest -q` 통과(교차 합계·소계·미귀속 모델별이 6-1 정답과 일치하는 테스트 추가), `python evaluation/run_eval.py --llm stub` 12/12 유지
   - 결과(2026-10-22): pytest 126건 통과(교차 표 24건·미귀속 모델별·group_by 검증 추가), stub 12/12. 참고 문서 `data/reference/supported_questions.md` 예시도 교차 표 질문으로 바꿨다
-- [ ] 6-3 (45분) `get_mom_change` 에 `team`·`service` 범위 인자와 1~2개 기준 `dimension` 목록을 더한다. 순위는 지금처럼 USD 증감액 기준, 미귀속은 범위를 좁히면 빠진다(집계와 같은 규칙)
+- [x] 6-3 (45분) `get_mom_change` 에 `team`·`service` 범위 인자와 1~2개 기준 `dimension` 목록을 더한다. 순위는 지금처럼 USD 증감액 기준, 미귀속은 범위를 좁히면 빠진다(집계와 같은 규칙)
   - 확인: `python -m pytest -q` 통과(범위·두 기준 전월 대비가 6-1 정답과 일치), stub 12/12 유지
+  - 결과(2026-10-22): pytest 147건 통과(두 기준 전월 대비 12건·팀 범위 전월 대비 8건·오류 처리 추가), stub 12/12. 항목은 `key` 대신 기준 이름 필드를 갖는다. 지원 질문 안내에 범위 지정 예시를 더했다
 - [ ] 6-4 (30분) `--llm bedrock` 재실행과 교차 표 실제 질문 1회("9월 팀별·모델별 비용 표로 보여줘")
   - 확인: 재실행 10/12 이상·노출 0, 교차 표 답변의 금액·원화가 모두 contexts 값이다(숫자 근거 규칙과 같은 대조). SERVICE.md 5장을 고친다
 - 커밋: 작업마다 하나(6-0 docs, 6-1 feat(data), 6-2 feat(tools), 6-3 feat(tools), 6-4 docs)

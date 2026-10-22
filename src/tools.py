@@ -173,35 +173,48 @@ def build_tools(repo: TenantRepo) -> list:
 
     @tool
     def get_mom_change(
-        dimension: Literal["team", "service", "model"],
+        dimension: list[Literal["team", "service", "model"]],
         direction: Literal["increase", "decrease"] = "increase",
         this_month: str = "2026-09",
         last_month: str = "2026-08",
+        team: str | None = None,
+        service: str | None = None,
         top_n: int = 3,
     ) -> dict:
         """지난달 대비 이번 달 비용이 가장 많이 늘어난(direction='increase') 또는 줄어든(direction='decrease') 상위 항목을 돌려준다.
+        dimension 은 기준 1~2개 목록이다. ["model"] 이면 모델별, ["team", "model"] 이면 팀 × 모델 조합별 순위다.
+        items 의 각 항목은 기준 이름(team, service, model)을 필드로 갖는다.
+        team 이나 service 로 범위를 좁힐 수 있다(예: 고객지원팀의 모델별 전월 대비).
         순위는 USD 증감액 기준이며 증감률(pct_or_new)은 소수 한 자리다. 지난달 비용이 0인 항목은 '신규'로 표시한다.
-        미귀속 비용은 순위에서 빼고 unattributed 로 따로 돌려준다.
+        미귀속 비용은 순위에서 빼고 unattributed 로 따로 돌려준다. 범위를 좁히면 미귀속은 빠진다.
         증가의 업무상 이유는 데이터에 없으므로 추측하지 않는다.
-        '왜 늘었어', '전월 대비 증가 원인', '줄어든 서비스' 같은 질문에 쓴다."""
-        key = GROUP_KEYS[dimension]
-        this, this_un = repo.sum_by(this_month, key)
-        last, last_un = repo.sum_by(last_month, key)
+        '왜 늘었어', '전월 대비 증가 원인', '줄어든 서비스', '고객지원팀 모델별로 뭐가 늘었어' 같은 질문에 쓴다."""
+        dims = list(dimension)
+        if not 1 <= len(dims) <= 2 or len(set(dims)) != len(dims):
+            return {"error": "dimension 은 서로 다른 기준 1~2개 목록입니다.", "allowed": ["team", "service", "model"]}
+        if team is not None and team not in repo.names("team"):
+            return {"error": f"'{team}' 팀은 이 회사 데이터에 없습니다.", "teams": sorted(repo.names("team"))}
+        if service is not None and service not in repo.names("service"):
+            return {"error": f"'{service}' 서비스는 이 회사 데이터에 없습니다.", "services": sorted(repo.names("service"))}
+        key = tuple(GROUP_KEYS[d] for d in dims)
+        this, this_un = repo.sum_by(this_month, key, team, service)
+        last, last_un = repo.sum_by(last_month, key, team, service)
         items = []
         for k in set(this) | set(last):
             d = this.get(k, 0) - last.get(k, 0)
             if (direction == "increase" and d > 0) or (direction == "decrease" and d < 0):
                 items.append((d, k))
-        items.sort(key=lambda x: x[0], reverse=(direction == "increase"))
+        items.sort(key=lambda x: (-x[0] if direction == "increase" else x[0], x[1]))
         rate = repo.settings["krw_rate"]
-        return {
+        result = {
             "this_month": this_month,
             "last_month": last_month,
-            "dimension": dimension,
+            "dimension": dims,
+            "scope": {"team": team, "service": service},
             "direction": direction,
             "items": [
                 {
-                    "key": k,
+                    **dict(zip(dims, k)),
                     "this_usd": to_usd(this.get(k, 0)),
                     "this_krw": to_krw(this.get(k, 0), rate),
                     "last_usd": to_usd(last.get(k, 0)),
@@ -212,7 +225,9 @@ def build_tools(repo: TenantRepo) -> list:
                 }
                 for d, k in items[:top_n]
             ],
-            "unattributed": {
+        }
+        if team is None and service is None:
+            result["unattributed"] = {
                 "key": UNATTRIBUTED,
                 "this_usd": to_usd(this_un),
                 "this_krw": to_krw(this_un, rate),
@@ -220,8 +235,8 @@ def build_tools(repo: TenantRepo) -> list:
                 "last_krw": to_krw(last_un, rate),
                 "delta_usd": to_usd(this_un - last_un),
                 "delta_krw": to_krw(this_un - last_un, rate),
-            },
-        }
+            }
+        return result
 
     @tool
     def simulate_model_swap(

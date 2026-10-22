@@ -53,13 +53,13 @@ STUB_PLANS = {
     "이번 달 팀별 비용 알려줘": [("get_cost_breakdown", {"group_by": ["team"]})],
     "고객지원팀 서비스별 9월 비용은?": [("get_cost_breakdown", {"group_by": ["service"], "team": "고객지원팀"})],
     "9월 팀별·모델별 비용 표로 보여줘": [("get_cost_breakdown", {"group_by": ["team", "model"]})],
-    "지난달 대비 이번 달 팀별 비용이 왜 늘었어?": [("get_mom_change", {"dimension": "team"})],
+    "지난달 대비 이번 달 팀별 비용이 왜 늘었어?": [("get_mom_change", {"dimension": ["team"]})],
     "claude-sonnet를 claude-haiku로 바꾸면 9월 비용이 얼마나 줄어?": [
         ("simulate_model_swap", {"from_model": "claude-sonnet", "to_model": "claude-haiku"})],
     "물류팀 비용 알려줘": [("get_cost_breakdown", {"group_by": ["service"], "team": "물류팀"})],
-    "모델별로 지난달 대비 9월 비용 변화 보여줘. 새로 생긴 것도 있어?": [("get_mom_change", {"dimension": "model"})],
+    "모델별로 지난달 대비 9월 비용 변화 보여줘. 새로 생긴 것도 있어?": [("get_mom_change", {"dimension": ["model"]})],
     "9월 비용 중 태그 없는 미귀속 비용은 얼마야?": [("get_cost_breakdown", {"group_by": ["team"]})],
-    "지난달보다 비용이 줄어든 서비스 알려줘": [("get_mom_change", {"dimension": "service", "direction": "decrease"})],
+    "지난달보다 비용이 줄어든 서비스 알려줘": [("get_mom_change", {"dimension": ["service"], "direction": "decrease"})],
 }
 STUB_NO_PLAN = "stub: 이 질문에 쓸 도구 호출 계획이 없습니다."
 
@@ -109,12 +109,16 @@ def compose_answer(result: dict) -> str:
         lines.append(result["message"])
     elif "items" in result:
         word = "증가" if result["direction"] == "increase" else "감소"
-        lines.append(f"{result['last_month']} 대비 {result['this_month']} {result['dimension']}별 {word} 상위")
+        dims = result["dimension"]
+        lines.append(f"{result['last_month']} 대비 {result['this_month']} {' × '.join(dims)}별 {word} 상위")
         for i in result["items"]:
             pct = i["pct_or_new"] if i["pct_or_new"] == "신규" else f"{i['pct_or_new']}%"
-            lines.append(f"- {i['key']}: {money(i['delta_usd'].lstrip('-'), abs(i['delta_krw']))} {word} ({pct})")
-        u = result["unattributed"]
-        lines.append(f"- {u['key']}(순위 제외): 이번 달 {money(u['this_usd'], u['this_krw'])}, 지난달 {money(u['last_usd'], u['last_krw'])}")
+            name = " / ".join(i[d] for d in dims)
+            lines.append(f"- {name}: {money(i['delta_usd'].lstrip('-'), abs(i['delta_krw']))} {word} ({pct})")
+        if "unattributed" in result:
+            u = result["unattributed"]
+            lines.append(f"- {u['key']}(순위 제외): 이번 달 {money(u['this_usd'], u['this_krw'])}, "
+                         f"지난달 {money(u['last_usd'], u['last_krw'])}")
     else:
         lines.append(json.dumps(result, ensure_ascii=False))
     return "\n".join(lines)
