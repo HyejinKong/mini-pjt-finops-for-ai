@@ -32,7 +32,7 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
   - 확인: `python -m pytest -q` 전부 통과(기존 JWT 테스트가 jwt 모드로 그대로 통과)
 - [x] 1-4 (40분) `tests/test_api_auth.py` 에 static 모드 테스트를 더한다: 토큰 없음·접두어 오류·모르는 토큰·빈 토큰은 401, 꿀벌전자 토큰은 꿀벌전자 데이터만, 꿀벌전자 토큰으로 판다소프트를 물으면 거절 문구
   - 확인: `python -m pytest tests/test_api_auth.py -q` 에서 static 테스트가 모두 통과
-- [ ] 1-5 (30분) `.env.example` 에 `AUTH_MODE=static` 과 토큰 2줄을 넣는다(`JWT_SECRET=` 유지). 사용자가 `.env` 에 토큰 값을 채운 뒤 서버를 띄워 실제 Bedrock 으로 q01 을 보낸다
+- [x] 1-5 (30분) `.env.example` 에 `AUTH_MODE=static` 과 토큰 2줄을 넣는다(`JWT_SECRET=` 유지). 사용자가 `.env` 에 토큰 값을 채운 뒤 서버를 띄워 실제 Bedrock 으로 q01 을 보낸다
   - 확인: `uvicorn src.api:app` 에 꿀벌전자 토큰으로 q01 을 보내면 answer 에 q01 expected_traits 금액이 있고 contexts 에 get_cost_breakdown 결과, trace 에 도구 호출이 있다. 토큰 없이 보내면 401
 - 커밋: refactor(data) 가상 회사명 / feat(api) 고정 토큰 기본 인증·JWT 선택 모드
 
@@ -50,6 +50,7 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
   - 확인: `python -c "from src.retriever import search_reference; print(search_reference.invoke({'query': '환율'}))"` 결과에 fx_rate.md 의 환율이 나오고 회사명이 없다
 - [ ] 3-2 (40분) `src/agent.py` 에 search_reference 를 등록하고, 비율(%)·합계 등을 LLM 이 직접 계산하지 않게 프롬프트를 강화한다
   - 확인: `python src/agent.py` 실제 호출 답변의 숫자가 모두 contexts 에 있는 값이다(직접 눈으로 대조)
+  - 참고: 1-5 실제 호출에서 "검색플랫폼팀이 전체의 약 44%" 처럼 LLM 이 비율을 직접 계산했다
 - [ ] 3-3 (1시간) `src/tools.py`: `simulate_model_swap`(토큰 수 동일 가정, 입력·출력 단가 따로 재계산, "품질 차이 미반영" 문구). 시간이 부족하면 이 작업을 건너뛰고 q05 를 집계·전월 대비 문항으로 바꾼다
   - 확인: `python evaluation/run_eval.py --llm stub` 에서 q05 통과, 전체 10/12 이상 유지
 - 커밋: feat(tools) search_reference·simulate_model_swap
