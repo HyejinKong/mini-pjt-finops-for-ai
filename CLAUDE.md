@@ -32,6 +32,7 @@ tests/                       자격 증명 없이 도는 단위 테스트 (LLM �
 - POST /query 로 받고 본문에서는 question 필드만 읽는다
 - 신원은 `Authorization: Bearer <토큰>` 헤더로 받는다. 기본은 회사별 고정 토큰, JWT 선택 모드에서는 서명된 JWT. 없거나 잘못되면 401
 - 답은 answer, contexts, trace 세 키로 돌려준다. 도구 결과는 contexts 에 담는다
+- 대시보드 데이터는 `GET /dashboard/data?month=&scope_team=&scope_service=` 로 준다. 같은 Bearer 토큰으로 회사를 정하고, LLM 없이 도구 결과를 그대로 `kpi`·`breakdown`·`cross`·`mom`·`daily` 에 담는다. month 는 2026-09·2026-08 만, 모르는 값은 400
 
 ## 테넌트와 숫자 규칙
 - 회사(테넌트)는 검증된 토큰(기본 고정 토큰, JWT 선택 모드에서는 JWT)에서만 정한다. 도구 함수는 tenant 인자를 받지 않고, 검증된 신원으로 만든 테넌트 전용 저장소로만 데이터를 읽는다
