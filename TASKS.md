@@ -117,8 +117,9 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
 ## 묶음 7. 비용 대시보드 (추가 세션)
 로그인한 회사의 데이터만 보는 한 페이지 대시보드다. 숫자는 모두 도구가 계산하고, 인-아웃 세트 12건과 채점 규칙은 바꾸지 않는다. 시간이 부족하면 7-6, 그다음 7-2·7-3 을 미룬다.
 
-- [ ] 7-0 (15분) seed 를 `seed_ce738e162660.v1.4.0.yaml` 로 백업하고 v1.5.0 으로 고친다: 대시보드 범위(패널 다섯 개, 도구 직접 호출 + 버튼으로 받는 LLM 요약, 인라인 SVG, `src/ui.py` 분리), 테넌트 격리, 화면은 숫자를 계산하지 않는다는 규칙
+- [x] 7-0 (15분) seed 를 `seed_ce738e162660.v1.4.0.yaml` 로 백업하고 v1.5.0 으로 고친다: 대시보드 범위(패널 다섯 개, 도구 직접 호출 + 버튼으로 받는 LLM 요약, 인라인 SVG, `src/ui.py` 분리), 테넌트 격리, 화면은 숫자를 계산하지 않는다는 규칙
   - 확인: seed 에 위 내용이 있고 YAML 로 읽힌다
+  - 결과(2026-10-22): constraints 에 위 내용과 미룰 순서를 넣고 폴더 규약에 `src/ui.py` 를 더했다. 옛 Streamlit 예시 문구는 지웠다. 대시보드는 지금의 UI 처럼 합격 기준(acceptance gate) 밖이라 acceptance_criteria 는 그대로다
 - [ ] 7-1 (40분) `src/api.py` 의 `GET /` HTML·JS 를 `src/ui.py`(FastAPI `APIRouter`)로 옮기고 `api.py` 는 `include_router` 만 한다. 동작은 바꾸지 않는다. CLAUDE.md 폴더 구조에 `src/ui.py` 줄을 넣고 api.py 설명에서 시연 페이지를 뺀다(`check_docs.py` 는 적힌 경로가 실제로 있는지 보므로 코드 수정은 필요 없고, 파일이 생긴 이 작업에서 문서를 고친다)
   - 확인: `python -m pytest -q` 통과, 옮기기 전후 `GET /` 응답 본문이 같고(diff 0), `python evaluation/check_docs.py` 종료 코드 0
 - [ ] 7-2 (40분) `data/generate.py` 가 `tools.py` 와 독립적으로 회사별 일별 합계(9월·8월, 전체와 미귀속)를 계산해 `expected_values.json` 에 `daily` 로 더한다. 새 금액도 겹침 검사(`all_amounts`)에 들어간다
