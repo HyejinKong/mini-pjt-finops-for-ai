@@ -171,6 +171,9 @@ APP_HTML = r"""<!doctype html>
   .ask-h { display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid var(--line);
            background:linear-gradient(180deg, var(--panel-2), var(--panel)); }
   .ask-h b { display:block; font-size:14.5px; } .ask-h small { display:block; font-size:12px; color:var(--faint); }
+  .ask-h button.new { margin-left:auto; flex:none; border:1px solid var(--line); background:var(--panel); color:var(--muted); border-radius:999px;
+                      padding:4px 11px; font:inherit; font-size:12px; cursor:pointer; }
+  .ask-h button.new:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
   .avatar { flex:none; width:32px; height:32px; border-radius:10px; display:grid; place-items:center; color:#fff;
             background:linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow:0 3px 10px rgba(59,110,245,.3); }
   .avatar.sm { width:26px; height:26px; border-radius:8px; box-shadow:none; }
@@ -259,9 +262,10 @@ APP_HTML = r"""<!doctype html>
       <div class="ask-h">
         <span class="avatar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M19 15l.8 2 2 .8-2 .7-.8 2-.7-2-2-.7 2-.8z"/></svg></span>
         <span><b>비용 분석 에이전트</b><small>숫자는 도구가 계산한 값만 옮깁니다</small></span>
+        <button class="new" id="new-chat" type="button" title="앞의 대화를 잊고 새로 시작합니다">새 대화</button>
       </div>
       <details class="ex" id="ex" open><summary>예시 질문</summary><div class="examples" id="examples"></div></details>
-      <div id="history" aria-live="polite"><p class="hint">질문을 입력하거나 예시를 눌러 보세요.<br>이 페이지에서 물은 질문과 답이 여기에 쌓입니다(새로고침하면 사라짐).</p></div>
+      <div id="history" aria-live="polite"><p class="hint">질문을 입력하거나 예시를 눌러 보세요.<br>질문과 답이 여기에 쌓이고, 에이전트는 앞의 대화를 이어서 이해합니다.<br>새로고침·새 대화·토큰을 바꾸면 새 대화로 시작합니다.</p></div>
       <div class="composer">
         <div class="box">
           <textarea id="q" rows="1" placeholder="무엇이든 물어보세요. 예: 이번 달 팀별 비용"></textarea>
@@ -657,8 +661,19 @@ APP_HTML = r"""<!doctype html>
   $("load").onclick = () => load();
   $("month").onchange = () => { if ($("token").value.trim()) load(); };
 
-  // 질문 패널: 이 페이지에서 물은 질문과 답을 쌓는다. 서버에는 지금처럼 질문 하나만 보낸다
-  const q = $("q"), send = $("send"), history = $("history");
+  // 질문 패널: 이 페이지에서 물은 질문과 답을 쌓는다. 서버에는 질문 하나와 대화 ID(X-Conversation-Id)를 보내 앞의 대화를 잇는다
+  const q = $("q"), send = $("send"), history = $("history"), hint = history.querySelector(".hint").cloneNode(true);
+  function newConversationId() {
+    return "c-" + (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + "-" + Math.random().toString(36).slice(2));
+  }
+  let conversationId = newConversationId();
+  function startConversation() {
+    conversationId = newConversationId();
+    history.replaceChildren(hint.cloneNode(true));
+    $("ex").open = true;
+  }
+  $("new-chat").onclick = () => { startConversation(); q.focus(); };
+  $("token").addEventListener("change", startConversation);
   for (const text of EXAMPLES) {
     const b = h("button", { type: "button" }, text);
     b.onclick = () => { q.value = text; q.focus(); };
@@ -690,7 +705,7 @@ APP_HTML = r"""<!doctype html>
     history.scrollTop = history.scrollHeight;
     send.disabled = true;
     try {
-      const headers = { "Content-Type": "application/json" }, token = $("token").value.trim();
+      const headers = { "Content-Type": "application/json", "X-Conversation-Id": conversationId }, token = $("token").value.trim();
       if (token) headers["Authorization"] = "Bearer " + token;
       const r = await fetch("/query", { method: "POST", headers, body: JSON.stringify({ question }) });
       const body = await r.json().catch(() => ({}));

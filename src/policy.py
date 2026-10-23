@@ -57,8 +57,9 @@ def tenant_names() -> dict:
     return {r["tenant_id"]: r["name"] for r in rows}
 
 
-def classify(question: str, tenant_id: str) -> PolicyDecision:
-    """질문을 secret → write → cross_tenant → out_of_scope → allowed 순서로 판정한다."""
+def classify(question: str, tenant_id: str, follow_up: bool = False) -> PolicyDecision:
+    """질문을 secret → write → cross_tenant → out_of_scope → allowed 순서로 판정한다.
+    follow_up 은 앞에서 답한 턴이 있는 대화의 이어지는 질문('제안대로 해줘')이다. 이때는 비용 낱말이 없다는 이유로만 거절하지 않는다."""
     q = question.strip()
     if SECRET_PATTERN.search(q):
         return PolicyDecision("secret", REFUSAL_SECRET)
@@ -67,6 +68,6 @@ def classify(question: str, tenant_id: str) -> PolicyDecision:
     others = [name for tid, name in tenant_names().items() if tid != tenant_id]
     if OTHER_COMPANY_PATTERN.search(q) or any(name.lower() in q.lower() for name in others):
         return PolicyDecision("cross_tenant", REFUSAL_CROSS_TENANT)
-    if FORECAST_PATTERN.search(q) or not COST_PATTERN.search(q):
+    if FORECAST_PATTERN.search(q) or not (follow_up or COST_PATTERN.search(q)):
         return PolicyDecision("out_of_scope", REFUSAL_OUT_OF_SCOPE)
     return PolicyDecision("allowed")

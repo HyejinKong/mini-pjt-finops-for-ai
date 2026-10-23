@@ -31,6 +31,7 @@ tests/                       자격 증명 없이 도는 단위 테스트 (LLM �
 ## 주고받는 형식 (제출 규약)
 - POST /query 로 받고 본문에서는 question 필드만 읽는다
 - 신원은 `Authorization: Bearer <토큰>` 헤더로 받는다. 기본은 회사별 고정 토큰, JWT 선택 모드에서는 서명된 JWT. 없거나 잘못되면 401
+- 이어지는 대화는 선택 헤더 `X-Conversation-Id`(영문·숫자·하이픈 8~64자, 틀리면 400)로 받는다. 서버는 (토큰의 회사, 대화 ID) 별로 질문과 답 글만 메모리에 두고 10턴이 차면 오래된 5턴을 숫자 없는 요약으로 접는다. 헤더가 없으면 질문 하나씩 답한다(채점은 헤더 없이 돈다)
 - 답은 answer, contexts, trace 세 키로 돌려준다. 도구 결과는 contexts 에 담는다
 - 대시보드 데이터는 `GET /dashboard/data?month=&scope_team=&scope_service=` 로 준다. 같은 Bearer 토큰으로 회사를 정하고, LLM 없이 도구 결과를 그대로 `kpi`·`breakdown`·`cross`·`mom`·`daily` 에 담고, 화면 배지용으로 자기 회사 `tenant`(tenant_id, name)를 더한다. month 는 2026-09·2026-08 만, 모르는 값은 400
 

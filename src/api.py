@@ -11,6 +11,7 @@ import argparse
 import hmac
 import json
 import os
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -30,6 +31,7 @@ ALGORITHM = "HS256"
 AUTH_MODES = ("static", "jwt")
 TOKEN_TTL = timedelta(hours=1)
 DASHBOARD_DIMENSIONS = ("team", "service", "model")
+CONVERSATION_ID = re.compile(r"[A-Za-z0-9-]{8,64}")
 
 
 @dataclass(frozen=True)
@@ -121,10 +123,23 @@ app = FastAPI(title="FinOps for AI Agent")
 app.include_router(ui.router)
 
 
+def get_conversation_id(x_conversation_id: str | None = Header(default=None)) -> str | None:
+    """선택 헤더 X-Conversation-Id 를 검사한다. 없으면 None(한 번씩 답함), 형식이 틀리면 400."""
+    if x_conversation_id is None:
+        return None
+    if not CONVERSATION_ID.fullmatch(x_conversation_id):
+        raise HTTPException(status_code=400, detail="X-Conversation-Id 는 영문·숫자·하이픈 8~64자입니다.")
+    return x_conversation_id
+
+
 @app.post("/query")
-def query(body: QueryRequest, principal: Principal = Depends(get_principal)) -> dict:
-    """질문을 받아 answer, contexts, trace 를 돌려준다."""
-    return agent.answer(body.question, principal.tenant_id)
+def query(
+    body: QueryRequest,
+    principal: Principal = Depends(get_principal),
+    conversation_id: str | None = Depends(get_conversation_id),
+) -> dict:
+    """질문을 받아 answer, contexts, trace 를 돌려준다. X-Conversation-Id 가 있으면 그 회사의 그 대화를 이어 간다."""
+    return agent.answer(body.question, principal.tenant_id, conversation_id=conversation_id)
 
 
 def previous_month(month: str) -> str:

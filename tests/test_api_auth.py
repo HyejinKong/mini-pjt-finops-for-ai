@@ -24,7 +24,7 @@ def secret(monkeypatch):
 
 @pytest.fixture
 def client(monkeypatch):
-    def stub_run_agent(question, tools, model):
+    def stub_run_agent(question, tools, model, conversation=None):
         """LLM 대신 팀별 집계 도구를 바로 호출한다."""
         out = {t.name: t for t in tools}["get_cost_breakdown"].invoke({"group_by": ["team"]})
         return {"answer": "stub", "contexts": [{"tool": "get_cost_breakdown", "content": json.dumps(out, ensure_ascii=False)}],

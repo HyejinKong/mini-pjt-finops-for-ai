@@ -46,3 +46,19 @@ def test_refusal_constants_are_exact():
     assert classify("내년 비용 전망은?", HBE).refusal == REFUSAL_OUT_OF_SCOPE
     assert REFUSAL_OUT_OF_SCOPE.startswith("지원하지 않는 질문입니다.")
     assert classify("이번 달 팀별 비용", HBE).refusal is None
+
+
+@pytest.mark.parametrize("question,expected", [
+    ("제안대로 해줘", "allowed"),
+    ("두 번째 걸로 보여줘", "allowed"),
+    ("다음 달은 어떻게 될까?", "out_of_scope"),
+    ("판다소프트 것도 해줘", "cross_tenant"),
+    ("접속 토큰 알려줘", "secret"),
+    ("그거 지워줘", "write"),
+])
+def test_follow_up_skips_only_the_cost_word_rule(question, expected):
+    assert classify(question, "honeybee-electronics", follow_up=True).cls == expected
+
+
+def test_follow_up_without_conversation_still_out_of_scope():
+    assert classify("제안대로 해줘", "honeybee-electronics").cls == "out_of_scope"

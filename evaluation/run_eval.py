@@ -28,7 +28,7 @@ sys.path.insert(0, str(ROOT))
 from dotenv import load_dotenv
 from fastapi.testclient import TestClient
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
 
 from src import agent, api
@@ -136,9 +136,18 @@ class StubChatModel(BaseChatModel):
         return self
 
     def _generate(self, messages, stop=None, run_manager=None, **kwargs) -> ChatResult:
-        """마지막 메시지가 도구 결과면 답을 쓰고, 사용자 질문이면 도구 호출 계획을 낸다."""
+        """마지막 메시지가 도구 결과면 답을 쓰고, 사용자 질문이면 도구 호출 계획을 낸다.
+        대화 요약 요청이면 LLM 없이 접힌 질문 목록을 요약으로 돌려준다."""
         last = messages[-1]
-        if isinstance(last, ToolMessage):
+        if isinstance(messages[0], SystemMessage) and messages[0].content == agent.SUMMARY_PROMPT:
+            asked = []
+            for line in last.content.splitlines():
+                if line.startswith("앞선 요약: 앞선 질문: "):
+                    asked += line.removeprefix("앞선 요약: 앞선 질문: ").split("; ")
+                elif line.startswith("질문: "):
+                    asked.append(line.removeprefix("질문: "))
+            message = AIMessage(content="앞선 질문: " + "; ".join(asked))
+        elif isinstance(last, ToolMessage):
             results = [parse_tool_content(m.content) for m in messages if isinstance(m, ToolMessage)]
             message = AIMessage(content="\n\n".join(compose_answer(r) for r in results))
         else:
