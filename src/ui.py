@@ -156,14 +156,42 @@ APP_HTML = r"""<!doctype html>
   .scale span.sw { width:22px; height:10px; border-radius:3px; display:inline-block; }
 
   /* 전월 대비 */
-  .mom { grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:20px; }
-  .mom .colh { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:650; margin:0 0 4px; }
-  ol.top { margin:0; padding:0; list-style:none; font-size:13px; counter-reset:r; }
-  ol.top li { counter-increment:r; display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 8px; padding:6px 8px; margin:0 -8px; border-radius:8px; }
+  .momgrid { display:grid; grid-template-columns:52px minmax(0, 1fr) minmax(0, 1fr); column-gap:24px; }
+  .momgrid > .colh { display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:650; padding-bottom:8px; border-bottom:1px solid var(--line); }
+  .momgrid > .dim { padding:10px 0; border-bottom:1px solid var(--line); font-size:12.5px; font-weight:650; color:var(--muted); }
+  .momgrid > ol.top { padding:4px 0; border-bottom:1px solid var(--line); }
+  .momgrid > .dim.last, .momgrid > ol.top.last { border-bottom:0; }
+  ol.top { margin:0; list-style:none; font-size:13px; counter-reset:r; }
+  ol.top li { counter-increment:r; display:grid; grid-template-columns:14px minmax(0, 1fr) minmax(40px, 72px) 84px 56px; gap:8px; align-items:center;
+              min-height:42px; padding:3px 8px; margin:0 -8px; border-radius:8px; }
   ol.top li:hover { background:var(--panel-2); }
-  ol.top li::before { content:counter(r); font-size:11px; font-weight:700; color:var(--faint); width:14px; }
-  ol.top .d { font-weight:650; font-variant-numeric:tabular-nums; }
-  ol.top .s { color:var(--muted); font-variant-numeric:tabular-nums; }
+  ol.top li::before { content:counter(r); font-size:11px; font-weight:700; color:var(--faint); }
+  ol.top li.blank:hover { background:none; }
+  ol.top li.blank::before { content:""; }
+  ol.top li.blank span { grid-column:2 / -1; font-size:12px; color:var(--faint); }
+  ol.top .n { min-width:0; }
+  ol.top .n b { display:block; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  ol.top .n small { display:block; font-size:11.5px; color:var(--faint); font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  ol.top svg { display:block; width:100%; height:10px; }
+  ol.top .d { font-weight:650; font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
+  ol.top .p { font-size:12px; font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
+  ol.inc .d, ol.inc .p { color:var(--up); } ol.dec .d, ol.dec .p { color:var(--down); }
+  ol.top .p.new { justify-self:end; padding:0 7px; border-radius:999px; font-weight:650; background:var(--up-bg); }
+  .momgrid > .dirlab { display:none; }
+  @media (max-width: 720px) {
+    .momgrid { grid-template-columns:minmax(0, 1fr); }
+    .momgrid > .colh, .momgrid > .corner { display:none; }
+    .momgrid > .dim { border-bottom:0; padding:12px 0 0; color:var(--text); }
+    .momgrid > ol.top { border-bottom:0; }
+    .momgrid > ol.dec { border-bottom:1px solid var(--line); padding-bottom:8px; }
+    .momgrid > ol.dec.last { border-bottom:0; }
+    ol.top li { grid-template-columns:14px minmax(0, 1fr) 84px 52px; }
+    ol.top svg { display:none; }
+    ol.top li.blank { min-height:0; }
+    ol.top li.blank:not(:first-child) { display:none; }
+    .momgrid > .dirlab { display:block; font-size:11.5px; font-weight:650; margin:6px 0 0; }
+    .momgrid > .dirlab.inc { color:var(--up); } .momgrid > .dirlab.dec { color:var(--down); }
+  }
 
   /* 일별 */
   .legend { display:flex; flex-wrap:wrap; gap:14px; font-size:13px; color:var(--muted); margin-bottom:6px; }
@@ -537,13 +565,21 @@ APP_HTML = r"""<!doctype html>
   }
 
   // 항목은 3칸을 채워 증가·감소 두 목록의 줄 높이를 맞춘다. 막대 길이는 패널 안 최대 증감액 기준 그리기 비율이다
-  function momList(m, dim) {
-    if (!m.items.length) return h("p", { class: "hint" }, "해당 항목이 없습니다.");
-    return h("ol", { class: "top" }, ...m.items.map(i => {
-      const li = h("li", {}, `${i[dim]} `, h("span", { class: "d" }, signedUsd(i.delta_usd)),
-        h("span", { class: "s" }, ` (${pct(i.pct_or_new)}) · ${usd(i.last_usd)} → ${usd(i.this_usd)}`));
-      return clickable(li, () => fillQuestion(momQuestion(m, dim, i[dim])));
-    }));
+  function momList(m, dim, max, last) {
+    const inc = m.direction === "increase", ol = h("ol", { class: "top " + (inc ? "inc" : "dec") + (last ? " last" : "") });
+    for (const i of m.items) {
+      const svg = s("svg", { "aria-hidden": "true" });
+      svg.append(s("rect", { x: 0, y: 1, width: (ratio(i.delta_usd.replace("-", ""), max) * 100).toFixed(2) + "%", height: 8, rx: 3,
+        fill: inc ? "var(--up)" : "var(--down)" }));
+      const isNew = i.pct_or_new === "신규";
+      const li = h("li", {}, h("span", { class: "n" }, h("b", { title: i[dim] }, i[dim]), h("small", {}, `${usd(i.last_usd)} → ${usd(i.this_usd)}`)),
+        svg, h("span", { class: "d" }, signedUsd(i.delta_usd)), h("span", { class: "p" + (isNew ? " new" : "") }, pct(i.pct_or_new)));
+      li.onmousemove = e => showTip(e, [[`${DIM_LABEL[dim]}: ${i[dim]}`], ["", `${usd(i.last_usd)} → ${usd(i.this_usd)}`], ["", signedKrw(i.delta_krw)]]);
+      li.onmouseleave = hideTip;
+      ol.append(clickable(li, () => fillQuestion(momQuestion(m, dim, i[dim]))));
+    }
+    for (let k = m.items.length; k < 3; k++) ol.append(h("li", { class: "blank" }, h("span", {}, k === 0 ? "해당 항목이 없습니다." : "")));
+    return ol;
   }
   // 패널 항목을 누르면 질문창에 채우기만 한다(보내지 않는다). 키보드로도 누를 수 있다
   function clickable(el, action) {
@@ -587,15 +623,19 @@ APP_HTML = r"""<!doctype html>
     const any = Object.values(mom.increase)[0];
     const panel = h("div", { class: "panel section" },
       title("전월 대비 상위 3", `${any.last_month} → ${any.this_month} · USD 증감액 순 · 누르면 원인 질문`, h("span", { class: "grow" }), h("label", { class: "cap" }, "범위 ", sel)));
-    const cols = h("div", { class: "grid mom" });
-    for (const [direction, title] of [["increase", "가장 많이 늘어난 항목"], ["decrease", "가장 많이 줄어든 항목"]]) {
-      const col = h("div", {}, h("div", { class: "colh" }, h("span", { class: "delta " + (direction === "increase" ? "up" : "down") }, icon(direction === "increase" ? "up" : "down", 12)), title));
-      for (const [dim, m] of Object.entries(mom[direction])) {
-        col.append(h("h3", {}, `${DIM_LABEL[dim]}별`), momList(m, dim));
-      }
-      cols.append(col);
-    }
-    panel.append(cols);
+    // 행은 기준(팀·서비스·모델), 열은 증가·감소. 탭 없이 한 화면에 모두 보인다
+    const dims = Object.keys(mom.increase);
+    const max = Math.max(...["increase", "decrease"].flatMap(d => dims.flatMap(k => mom[d][k].items.map(i => Number(i.delta_usd.replace("-", ""))))));
+    const head = (dir, text) => h("div", { class: "colh" }, h("span", { class: "delta " + dir }, icon(dir, 12)), text);
+    const grid = h("div", { class: "momgrid" }, h("div", { class: "corner" }),
+      head("up", "가장 많이 늘어난 상위 3"), head("down", "가장 많이 줄어든 상위 3"));
+    dims.forEach((dim, n) => {
+      const last = n === dims.length - 1;
+      grid.append(h("div", { class: "dim" + (last ? " last" : "") }, `${DIM_LABEL[dim]}별`),
+        h("div", { class: "dirlab inc" }, "▲ 늘어난 항목"), momList(mom.increase[dim], dim, max, last),
+        h("div", { class: "dirlab dec" }, "▼ 줄어든 항목"), momList(mom.decrease[dim], dim, max, last));
+    });
+    panel.append(grid);
     panel.append(h("p", { class: "hint" }, any.unattributed
       ? `미귀속(태그 없음)은 순위에서 뺐습니다: ${usd(any.unattributed.last_usd)} → ${usd(any.unattributed.this_usd)} (${signedUsd(any.unattributed.delta_usd)})`
       : "범위를 좁히면 미귀속은 빠집니다."));
