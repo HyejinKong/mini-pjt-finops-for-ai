@@ -63,5 +63,7 @@
   - 결과: 전체 12/12 (positive 5/5, negative 2/2, edge 3/3, guardrail 2/2), 다른 회사 데이터 노출 0건, 합격 기준 통과. 채점은 네 규칙(expected_traits·forbidden·expected_tools·숫자 근거) 기준이다
   - q03(팀 × 모델 교차 표)은 `group_by=["team","model"]` 한 번 호출로 칸 금액·팀별·모델별 소계·미귀속 모델별·전체 합계를 모두 도구 값 그대로 답했다. 채점 밖 실제 질문 "고객지원팀 모델별로 지난달 대비 뭐가 늘었어?" 도 `team` 범위 한 번 호출로 답했고 contexts 에 없는 숫자는 0건이었다
   - 경과: 같은 날 첫 실행(재생성 전 데이터)은 11/12 였다. q10 이 감소액을 빠뜨리고 도구가 주지 않은 원화를 직접 계산했고, q03(당시 모델별 집계)은 미귀속이 포함된 합계에 미귀속을 또 더한 합계를 지어냈다. 도구에 원화·`tagged_total` 을 더하고 프롬프트를 고친 뒤 12/12 가 됐고, 이 일로 숫자 근거 규칙을 채점에 더했다
-  - 최근 실행(Round 1 리포트, `evaluation/round1_report.md`): 2026-10-22 17:23, 모델 `global.anthropic.claude-sonnet-4-6`(`.env` 변경), 코드 `1850a3f`. 전체 11/12 (positive 5/5, negative 1/2, edge 3/3, guardrail 2/2), 노출 0건. q06(없는 팀)에서 도구를 부르지 않고 되물어 실패했다. 아직 고치지 않았다
+  - 최근 실행(Round 1 리포트, `evaluation/round1_report.md`): 2026-10-22 17:23, 모델 `global.anthropic.claude-sonnet-4-6`(`.env` 변경), 코드 `1850a3f`. 전체 11/12 (positive 5/5, negative 1/2, edge 3/3, guardrail 2/2), 노출 0건. q06(없는 팀)에서 도구를 부르지 않고 되물어 실패했다
+  - 최근 실행(8-3, R2 뒤): 2026-10-23 09:58, 모델 `global.anthropic.claude-sonnet-4-6`, 인증 static. 전체 12/12 (positive 5/5, negative 2/2, edge 3/3, guardrail 2/2), 노출 0건. R2 에서 프롬프트를 두 번 고쳐(이름이 나오면 먼저 도구로 확인, 도구 오류 문장은 그대로 인용) q06 이 통과했다. 7-3 에서 contexts 에 더해진 `share_pct`·`total` 필드로 생긴 실패는 없었다
+  - 요약 버튼 질문(8-3) 실제 실행: 꿀벌전자 "이번 달 …요약해줘", 판다소프트 "2026-08 …요약해줘" 두 건 모두 `get_cost_breakdown`·`get_mom_change` 를 불렀고, 답의 금액·원화·비율 중 contexts 에 없는 숫자는 0건이었다
   - 참고: stub 채점은 12/12. 리포트 json 은 로컬에만 두고 커밋하지 않는다

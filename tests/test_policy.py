@@ -62,3 +62,11 @@ def test_follow_up_skips_only_the_cost_word_rule(question, expected):
 
 def test_follow_up_without_conversation_still_out_of_scope():
     assert classify("제안대로 해줘", "honeybee-electronics").cls == "out_of_scope"
+
+
+@pytest.mark.parametrize("question", [
+    "이번 달 비용을 전월 대비 증감과 가장 많이 늘어난 항목 3개 중심으로 요약해줘",
+    "2026-08 비용을 전월 대비 증감과 가장 많이 늘어난 항목 3개 중심으로 요약해줘",
+])
+def test_summary_button_questions_allowed(question):
+    assert classify(question, "honeybee-electronics").cls == "allowed"

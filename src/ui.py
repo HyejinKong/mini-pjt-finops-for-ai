@@ -82,6 +82,9 @@ APP_HTML = r"""<!doctype html>
   }
   .grid { display:grid; gap:16px; }
   .section { margin-top:20px; }
+  .sumbar { display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; margin-bottom:16px; padding:12px 16px 12px 20px; }
+  .sumbar p { flex:1 1 220px; margin:0; font-size:13px; color:var(--muted); }
+  .sumbar button.go { flex:none; }
   .panel { padding:18px 20px; border:1px solid var(--line); border-radius:16px; background:var(--panel); box-shadow:var(--shadow); min-width:0;
            transition:box-shadow .2s ease, transform .2s ease; }
   .ph { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; margin-bottom:14px; }
@@ -353,6 +356,10 @@ APP_HTML = r"""<!doctype html>
   function heatStep(value, max) { return Math.min(4, Math.floor(ratio(value, max) * 5)); }
   // dash:end
   // ask:start 패널 항목으로 질문 문장을 만든다. 달은 도구 결과의 period·this_month·last_month 를 그대로 쓴다
+  // 요약 버튼 질문: 기준 달이 이번 달(월 선택의 첫 항목)이면 "이번 달", 아니면 그 달을 넣는다
+  function summaryQuestion(month, thisMonth) {
+    return `${month === thisMonth ? "이번 달" : month} 비용을 전월 대비 증감과 가장 많이 늘어난 항목 3개 중심으로 요약해줘`;
+  }
   function teamQuestion(month, team) { return `${month} ${team} 서비스별 비용 알려줘`; }
   function swapQuestion(month, from, to) { return `${month} ${from}를 ${to}로 바꾸면 비용이 얼마나 줄어?`; }
   function momQuestion(m, dim, name) {
@@ -428,6 +435,14 @@ APP_HTML = r"""<!doctype html>
       kpiTile("calendar", `${k.previous_month} 합계`, usd(t.last_usd), krw(t.last_krw)),
       kpiTile("trend", "전월 대비", signedUsd(t.delta_usd), deltaBadge(t.delta_usd, t.pct_or_new), signedKrw(t.delta_krw)),
       unTile);
+  }
+  // 요약 버튼: 패널 항목과 달리 누르면 질문 패널로 바로 보낸다
+  function renderSummary(month) {
+    const thisMonth = $("month").options[0].value;
+    const b = h("button", { class: "go", type: "button" }, month === thisMonth ? "이번 달 요약 받기" : `${month} 요약 받기`);
+    b.onclick = () => ask(summaryQuestion(month, thisMonth));
+    return h("div", { class: "panel sumbar" },
+      h("p", {}, "에이전트가 전월 대비 증감과 가장 많이 늘어난 항목 3개를 한 단락으로 요약합니다. 답은 오른쪽 질문 패널에 쌓입니다."), b);
   }
   function emptyState() {
     const art = s("svg", { width: 240, height: 170, viewBox: "0 0 240 170", "aria-hidden": "true" });
@@ -630,7 +645,7 @@ APP_HTML = r"""<!doctype html>
     const names = { team: body.breakdown.team.rows.map(r => r.team).sort(), service: body.breakdown.service.rows.map(r => r.service).sort() };
     $("tenant").textContent = body.tenant.name;
     $("tenant").hidden = false;
-    $("view").replaceChildren(renderKpi(body.kpi), renderBars(body.breakdown), renderCross(body.cross),
+    $("view").replaceChildren(renderSummary(body.kpi.month), renderKpi(body.kpi), renderBars(body.breakdown), renderCross(body.cross),
       renderMom(body.mom, scopeValue, names), renderDaily(body.daily));
   }
   function message(text, isError) {
