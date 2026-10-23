@@ -14,10 +14,10 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
 - 이름·글꼴(2026-10-22 추가, 8-1a): 서비스 이름은 사용자가 정한 FinOps Radar(부제 Bedrock 비용 분석)다. 글꼴은 Noto Sans KR 을 Google Fonts 스타일시트로 불러온다. 외부 CDN 금지의 유일한 예외이고, 차트·마크다운 변환기·스크립트는 계속 외부 코드 없이 페이지 안에 둔다(페이지의 외부 주소가 fonts.googleapis.com·fonts.gstatic.com 뿐인지 테스트로 확인). 오프라인이거나 막히면 맑은 고딕으로 보인다
 - 일별 금액 겹침(2026-10-22 추가, 7-2): 지금 데이터의 일별 금액 중 2개($2.41 판다소프트 8/15 미귀속, $57.21 꿀벌전자 8/26 합계)가 다른 회사 기존 정답 금액과 같다. 데이터는 다시 만들지 않고 일별을 유지한다. 일별 금액은 대시보드 전용이라 에이전트·채점에 나오지 않으므로 생성기의 겹침 검사에서 뺀다. 대시보드 누출 테스트는 "다른 회사에만 있는 금액"(자기 회사 금액과 겹치는 값 제외)으로 검사한다. 7-4 에서 같은 일이 8월 대 7월 전월 대비에서도 나왔다(판다소프트 팀 증가액 $8.05 가 꿀벌전자 정답 금액과 같음). 정답 파일에는 9월 대 8월만 있으므로 대시보드 전용 금액(일별, 8월 대 7월 전월 대비)은 자기 회사 도구로 계산한 값을 자기 회사 금액으로 친다
 
-| 기존 | 새 이름 | tenant_id | 사용자 접두어 | 토큰 환경변수 |
-|---|---|---|---|---|
-| 삼성전자 | 꿀벌전자 | honeybee-electronics | hbe- | TENANT_TOKEN_HONEYBEE_ELECTRONICS |
-| 삼성SDS | 판다소프트 | panda-soft | pds- | TENANT_TOKEN_PANDA_SOFT |
+| 새 이름 | tenant_id | 사용자 접두어 | 토큰 환경변수 |
+|---|---|---|---|
+| 꿀벌전자 | honeybee-electronics | hbe- | TENANT_TOKEN_HONEYBEE_ELECTRONICS |
+| 판다소프트 | panda-soft | pds- | TENANT_TOKEN_PANDA_SOFT |
 
 ## 완료 (1일차, 2026-10-21)
 - [x] 더미 사용 로그·단가표·사용자 매핑·인-아웃 세트 생성(`data/generate.py`)
@@ -30,10 +30,10 @@ SERVICE.md 를 작업 단위로 쪼갠 목록이다. 작업 하나는 30분~1시
 회사 하나, 질문 하나(q01 "이번 달 팀별 비용 알려줘")가 처음부터 끝까지 돌아가는 것만 목표로 한다.
 토큰 환경변수 이름이 새 tenant_id 를 쓰므로 회사명 교체를 이 묶음 앞에 둔다.
 
-- [x] 1-1 (45분) `data/generate.py` 의 회사 이름·tenant_id·접두어와 q11 질문("판다소프트 팀별 비용도 보여줘")을 바꾸고 다시 생성한다. 옛 `data/usage/samsung-*.csv` 는 `git rm`
-  - 확인: 생성 전후 `evaluation/expected_values.json` 의 금액 목록이 같고, `git grep -n -iE "삼성|samsung" -- data evaluation` 결과 0건
+- [x] 1-1 (45분) `data/generate.py` 의 회사 이름·tenant_id·접두어와 q11 질문("판다소프트 팀별 비용도 보여줘")을 바꾸고 다시 생성한다. 옛 회사명의 사용 로그 파일은 `git rm`
+  - 확인: 생성 전후 `evaluation/expected_values.json` 의 금액 목록이 같고, `data`·`evaluation` 에서 옛 회사명 검색 결과 0건
 - [x] 1-2 (30분) `src/agent.py`(시험 실행 user_id)와 `tests/*.py` 의 tenant_id·user_id·회사명을 바꾼다
-  - 확인: `python -m pytest -q` 전부 통과, `git grep -n -iE "삼성|samsung|\bsec-|\bsds-" -- . ":!uv.lock"` 결과 0건
+  - 확인: `python -m pytest -q` 전부 통과, 저장소 전체(uv.lock 제외)에서 옛 회사명·옛 사용자 접두어 검색 결과 0건
 - [x] 1-3 (45분) `src/api.py`: `get_principal` 이 `AUTH_MODE`(기본 static)에 따라 `resolve_static`(`.env` 토큰 2개와 `hmac.compare_digest` 비교, 빈 값은 통과 금지) 또는 `resolve_jwt`(지금 JWT 로직을 옮긴 것)를 부른다. 기존 JWT 테스트에는 `AUTH_MODE=jwt` monkeypatch 를 더한다
   - 확인: `python -m pytest -q` 전부 통과(기존 JWT 테스트가 jwt 모드로 그대로 통과)
 - [x] 1-4 (40분) `tests/test_api_auth.py` 에 static 모드 테스트를 더한다: 토큰 없음·접두어 오류·모르는 토큰·빈 토큰은 401, 꿀벌전자 토큰은 꿀벌전자 데이터만, 꿀벌전자 토큰으로 판다소프트를 물으면 거절 문구
