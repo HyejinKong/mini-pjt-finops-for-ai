@@ -143,7 +143,15 @@ APP_HTML = r"""<!doctype html>
   th:first-child, td:first-child { text-align:left; }
   thead th { color:var(--faint); font-weight:600; font-size:12px; text-transform:none; }
   tr.sum td, td.sum { font-weight:650; }
-  td.heat { border:2px solid var(--panel); border-radius:6px; }
+  td.heat { border:2px solid var(--panel); }
+  table.cross { width:100%; min-width:560px; table-layout:fixed; }
+  table.cross col.k { width:22%; } table.cross col.st { width:15%; }
+  table.cross th:last-child, table.cross td:last-child { border-left:2px solid var(--line); }
+  table.cross tbody tr.foot td { background:var(--panel-2); }
+  table.cross tbody tr.foot-first td { border-top:2px solid var(--line); }
+  table.cross thead th { white-space:normal; overflow-wrap:anywhere; vertical-align:bottom; }
+  table.cross td:first-child { overflow:hidden; text-overflow:ellipsis; }
+  table.cross tr.un td:first-child { white-space:normal; }
   .scale { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:12px; font-size:12px; color:var(--muted); }
   .scale span.sw { width:22px; height:10px; border-radius:3px; display:inline-block; }
 
@@ -515,19 +523,20 @@ APP_HTML = r"""<!doctype html>
       tr.append(h("td", { class: "sum" }, usd(c.subtotals[a].find(x => x[a] === rk).usd)));
       body.append(tr);
     }
-    body.append(h("tr", { class: "sum" }, h("td", {}, "소계"), ...colKeys.map(k => h("td", {}, usd(c.subtotals[b].find(x => x[b] === k).usd))),
+    body.append(h("tr", { class: "sum foot foot-first" }, h("td", {}, "소계"), ...colKeys.map(k => h("td", {}, usd(c.subtotals[b].find(x => x[b] === k).usd))),
       h("td", {}, usd(c.tagged_total.usd))));
     const un = new Map((c.unattributed.by_model || []).map(x => [x.model, x]));
-    body.append(h("tr", {}, h("td", {}, "미귀속 (태그 없음)"), ...colKeys.map(k => h("td", {}, un.has(k) ? usd(un.get(k).usd) : "–")),
-      h("td", { class: "sum" }, usd(c.unattributed.usd))));
-    body.append(h("tr", { class: "sum" }, h("td", {}, "전체 합계"), ...colKeys.map(() => h("td", {}, "")), h("td", {}, usd(c.total.usd))));
+    body.append(h("tr", { class: "foot un" }, h("td", {}, "미귀속", h("span", { class: "tag" }, "팀에 나누지 않음")),
+      ...colKeys.map(k => h("td", {}, un.has(k) ? usd(un.get(k).usd) : "–")), h("td", { class: "sum" }, usd(c.unattributed.usd))));
+    body.append(h("tr", { class: "sum foot" }, h("td", { colspan: colKeys.length + 1 }, "전체 합계 (미귀속 포함)"), h("td", {}, usd(c.total.usd))));
     const swatches = [0, 1, 2, 3, 4].map(i => { const sw = h("span", { class: "sw" }); sw.style.background = `var(--heat-${i})`; return sw; });
-    const scale = h("div", { class: "scale" }, "적음", ...swatches, "많음",
-      h("span", {}, " · 칸 색은 태그된 칸끼리 비교한 크기입니다. 미귀속은 팀에 나누지 않고 모델별로만 따로 적었습니다"));
+    const scale = h("div", { class: "scale" }, "적음", ...swatches, "많음", h("span", {}, " · 미귀속 줄은 색 비교에서 뺐습니다"));
+    const cols = h("colgroup", {}, h("col", { class: "k" }), ...colKeys.map(() => h("col")), h("col", { class: "st" }));
     return h("div", { class: "panel section" }, title(`${DIM_LABEL[a]} × ${DIM_LABEL[b]} 비용`, `${c.period} · 칸 색이 진할수록 큰 금액`),
-      h("div", { class: "tbl" }, h("table", {}, h("thead", {}, head), body)), scale);
+      h("div", { class: "tbl" }, h("table", { class: "cross" }, cols, h("thead", {}, head), body)), scale);
   }
 
+  // 항목은 3칸을 채워 증가·감소 두 목록의 줄 높이를 맞춘다. 막대 길이는 패널 안 최대 증감액 기준 그리기 비율이다
   function momList(m, dim) {
     if (!m.items.length) return h("p", { class: "hint" }, "해당 항목이 없습니다.");
     return h("ol", { class: "top" }, ...m.items.map(i => {
